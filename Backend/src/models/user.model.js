@@ -7,8 +7,8 @@ const userSchema = new mongoose.Schema(
     username: {
       type: String,
       required: [true, 'Username is required'],
-      unique: true,
       lowercase: true,
+      select: true,
       trim: true,
       minlength: [3, 'Username must be at least 3 characters long'],
       maxlength: [30, 'Username cannot exceed 30 characters'],
@@ -41,28 +41,20 @@ const userSchema = new mongoose.Schema(
     refreshToken: {
       type: String,
       default: null,
-      select: false // Don't return refresh token by default
+      select: false 
     }
   },
   {
-    timestamps: true // Automatically adds createdAt and updatedAt fields
+    timestamps: true 
   }
 );
 
 // Hash password before saving
-userSchema.pre('save', async function (next) {
-  // Only hash the password if it has been modified (or is new)
-  if (!this.isModified('password')) {
-    return next();
-  }
+userSchema.pre('save', async function () {
+  if (!this.isModified('password')) return;
 
-  try {
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
-    next();
-  } catch (error) {
-    next(error);
-  }
+  this.password = await bcrypt.hash(this.password, 12);
+  return;
 });
 
 // Method to compare password for login
@@ -101,37 +93,5 @@ userSchema.methods.generateRefreshToken = function () {
     }
   );
 };
-
-// Method to generate both tokens
-userSchema.methods.generateAuthTokens = async function () {
-  const accessToken = this.generateAccessToken();
-  const refreshToken = this.generateRefreshToken();
-
-  // Save refresh token to database
-  this.refreshToken = refreshToken;
-  await this.save({ validateBeforeSave: false });
-
-  return { accessToken, refreshToken };
-};
-
-// Static method to find user by credentials
-userSchema.statics.findByCredentials = async function (identifier, password) {
-  // identifier can be username or email
-  const user = await this.findOne({
-    $or: [{ email: identifier.toLowerCase() }, { username: identifier.toLowerCase() }]
-  }).select('+password');
-
-  if (!user) {
-    throw new Error('Invalid credentials');
-  }
-
-  const isPasswordValid = await user.comparePassword(password);
-  if (!isPasswordValid) {
-    throw new Error('Invalid credentials');
-  }
-
-  return user;
-};
-
 
 export const User = mongoose.model('User', userSchema);
