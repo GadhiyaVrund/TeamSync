@@ -1,0 +1,19 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "Backend for TeamOps schemas and controllers etc.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "Node",
+    "Js"
+  ],
+  "author": "Vrund Gadhiya",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/GadhiyaVrund/Jadhmari/issues"
+  },
+  "homepage": "https://github.com/GadhiyaVrund/Jadhmari#readme"
+}
