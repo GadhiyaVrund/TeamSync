@@ -4,8 +4,10 @@
   "description": "Backend for TeamOps schemas and controllers etc.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node index.js",
+    "dev": "nodemon index.js"
   },
+  "type": "module",
   "keywords": [
     "Node",
     "Js"
@@ -15,5 +17,13 @@
   "bugs": {
     "url": "https://github.com/GadhiyaVrund/Jadhmari/issues"
   },
-  "homepage": "https://github.com/GadhiyaVrund/Jadhmari#readme"
+  "homepage": "https://github.com/GadhiyaVrund/Jadhmari#readme",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.11"
+  }
 }
