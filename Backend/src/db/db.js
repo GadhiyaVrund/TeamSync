@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 
 const connectDB = async () => {
     try {
-        await mongoose.connect(`${process.env.BACK_URL}/${'TeamOps'}`)
+        await mongoose.connect(`${process.env.BACK_URL}/TeamOps`)
         console.log('MongoDB Connected Successfully');
 
     } catch (error) {

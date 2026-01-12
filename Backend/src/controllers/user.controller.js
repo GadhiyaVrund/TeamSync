@@ -54,25 +54,34 @@ const loginUser = asyncHandler(async (req, res) => {
 
 
     if(!user){
-        throw new ApiError(401, 'Invalid credentials');
+        throw new ApiError(401, 'User not found...');
     }
 
     if(!(await user.comparePassword(password))){
         throw new ApiError(401, 'Invalid Password...');
     }
 
+
     const { authToken, refreshToken } = await genereateAuthReftoken(user);
+    //store tokens in cookies 
+    const rules = {
+        httpOnly: true,
+        secure: true, // Set to true if using HTTPS
+    }
 
     return res
     .status(200)
+    .cookie('authToken', authToken, rules)
+    .cookie('refreshToken', refreshToken, rules)
     .json(new ApiResponse(200, 'Login successful', { authToken, refreshToken }));
 
 })
 
-
+const logoutUser = asyncHandler(async (req, res) => {})
 
 
 export {
     registerUser,
-    loginUser
+    loginUser, 
+    logoutUser
 }

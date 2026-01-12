@@ -7,11 +7,11 @@ dotenv.config({
 });
 
 
-connectDB()
+await connectDB()
     .then(() => {
         app.listen(process.env.PORT || 5000, async () => {
             console.log(`Server is running on port ${process.env.PORT || 5000}`);
-            await connectDB();
+            
         });
     })
     .catch((error) => {
