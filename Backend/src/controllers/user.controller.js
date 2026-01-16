@@ -94,8 +94,53 @@ const logoutUser = asyncHandler(async (req, res) => {
 })
 
 
+
+const updateUser = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const allowedFields = ['username', 'email', 'mobileNo', 'password'];
+
+    const updates = {};
+    for (const field of allowedFields) {
+        if (Object.prototype.hasOwnProperty.call(req.body, field)) {
+            updates[field] = req.body[field];
+        }
+    }
+
+    if (Object.keys(updates).length === 0) {
+        throw new ApiError(400, 'No valid fields provided for update');
+    }
+
+    // Check for uniqueness conflicts for username/email/mobileNo
+    const conflictQuery = [];
+    if (updates.email) conflictQuery.push({ email: updates.email });
+    if (updates.username) conflictQuery.push({ username: updates.username });
+    if (updates.mobileNo) conflictQuery.push({ mobileNo: updates.mobileNo });
+
+    if (conflictQuery.length) {
+        const conflict = await User.findOne({
+            $or: conflictQuery,
+            _id: { $ne: id }
+        });
+        if (conflict) {
+            throw new ApiError(409, 'One of the provided fields is already in use');
+        }
+    }
+
+    const user = await User.findById(id).select('+password');
+    if (!user) {
+        throw new ApiError(404, 'User not found');
+    }
+
+    Object.assign(user, updates);
+    await user.save();
+
+    const updated = await User.findById(id).select('-refreshToken');
+    return res.status(200).json(new ApiResponse(200, 'User updated successfully', updated));
+});
+
 export {
     registerUser,
     loginUser, 
-    logoutUser
+    logoutUser,
+    updateUser
 }
