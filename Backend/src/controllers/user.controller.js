@@ -138,9 +138,34 @@ const updateUser = asyncHandler(async (req, res) => {
     return res.status(200).json(new ApiResponse(200, 'User updated successfully', updated));
 });
 
+const deleteUser = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+
+    if (!req.user || req.user._id.toString() !== id) {
+        throw new ApiError(403, 'Not authorized to delete this account');
+    }
+
+    const user = await User.findById(id);
+    if (!user) {
+        throw new ApiError(404, 'User not found');
+    }
+
+    await User.deleteOne({ _id: id });
+
+    return res
+    .status(200)
+    .clearCookie('authToken')
+    .clearCookie('refreshToken')
+    .json(new ApiResponse(200, 'Account deleted successfully'));
+});
+
+
+
+
 export {
     registerUser,
     loginUser, 
     logoutUser,
-    updateUser
+    updateUser,
+    deleteUser
 }
