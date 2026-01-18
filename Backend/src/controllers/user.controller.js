@@ -2,6 +2,7 @@ import {asyncHandler} from '../utils/asyncHandler.js';
 import { User } from '../models/user.model.js';
 import {ApiError} from '../utils/ApiError.js';
 import {ApiResponse} from '../utils/ApiResponse.js';
+import jwt from 'jsonwebtoken';
 
 const registerUser = asyncHandler(async (req, res) => {
     const { username, email, mobileNo, password } = req.body;
@@ -95,6 +96,55 @@ const logoutUser = asyncHandler(async (req, res) => {
 
 
 
+const getCurrentUser = asyncHandler(async (req, res) => {
+    if (!req.user) {
+        throw new ApiError(401, 'User session is invalid');
+    }
+
+    return res
+    .status(200)
+    .json(new ApiResponse(200, 'User fetched successfully', req.user));
+});
+
+
+const refreshAuthToken = asyncHandler(async (req, res) => {
+    const storedRefreshToken = req.cookies?.refreshToken || req.body?.refreshToken;
+
+    if (!storedRefreshToken) {
+        throw new ApiError(401, 'Refresh token is missing');
+    }
+
+    let decodedToken;
+    try {
+        decodedToken = jwt.verify(
+            storedRefreshToken,
+            process.env.REFRESH_TOKEN_SECRET || 'your-refresh-token-secret'
+        );
+    } catch (_error) {
+        throw new ApiError(401, 'Refresh token is invalid');
+    }
+
+    const user = await User.findById(decodedToken?._id).select('+refreshToken');
+
+    if (!user || user.refreshToken !== storedRefreshToken) {
+        throw new ApiError(401, 'Refresh token does not match the latest token');
+    }
+
+    const { authToken, refreshToken } = await genereateAuthReftoken(user);
+    const rules = {
+        httpOnly: true,
+        secure: true,
+    };
+
+    return res
+    .status(200)
+    .cookie('authToken', authToken, rules)
+    .cookie('refreshToken', refreshToken, rules)
+    .json(new ApiResponse(200, 'Tokens refreshed successfully', { authToken, refreshToken }));
+});
+
+
+
 const updateUser = asyncHandler(async (req, res) => {
     const { id } = req.params;
     const allowedFields = ['username', 'email', 'mobileNo', 'password'];
@@ -167,5 +217,7 @@ export {
     loginUser, 
     logoutUser,
     updateUser,
-    deleteUser
+    deleteUser,
+    getCurrentUser,
+    refreshAuthToken
 }
