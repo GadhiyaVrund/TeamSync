@@ -13,6 +13,9 @@ app.use(express.static('public'));
 app.use(cookieParser());
 
 import userRoutes from './routes/user.route.js';
+import teamRoutes from './routes/team.route.js';
+
 app.use('/api/v1/users', userRoutes);
+app.use('/api/v1/teams', teamRoutes);
 
 export default app;
