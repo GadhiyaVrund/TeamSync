@@ -7,7 +7,7 @@ import { verifyJwt } from '../middleware/auth.middleware.js';
 const router = express.Router();
 
 router.route('/register').post(registerUser);
-router.route('/login').post(verifyJwt,loginUser);
+router.route('/login').post(loginUser);
 router.route('/logout').post(verifyJwt,logoutUser);
 router.route('/me').get(verifyJwt, getCurrentUser);
 router.route('/refresh').post(refreshAuthToken);
