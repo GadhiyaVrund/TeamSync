@@ -42,13 +42,6 @@ router.route('/:teamId/members/:memberId')
 router.route('/:teamId/leave')
   .post(leaveTeam);           // Leave team
 
-// Task management routes
-router.route('/:teamId/tasks')
-  .post(createTask)           // Create task for team
-  .get(getTeamTasks);         // Get all tasks for team
 
-router.route('/:teamId/tasks/:taskId')
-  .patch(updateTask)          // Update task
-  .delete(deleteTask);        // Delete task
 
 export default router;

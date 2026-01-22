@@ -1,7 +1,7 @@
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiError } from '../utils/ApiError.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
-import Team from '../models/team.model.js';
+import { Team } from '../models/team.model.js';
 import { Todo } from '../models/todos.model.js';
 import { User } from '../models/user.model.js';
 
@@ -10,8 +10,11 @@ const createTeam = asyncHandler(async (req, res) => {
   const { name, description } = req.body;
   const userId = req.user._id;
 
-  if (!name) {
+  if (!name || name.trim() === '') {
     throw new ApiError(400, 'Team name is required');
+  }
+  if(description && description.length > 500) {
+    throw new ApiError(400, 'Description is required and cannot exceed 500 characters');
   }
 
   // Check if team with same name already exists for this user
@@ -319,191 +322,6 @@ const updateMemberRole = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, updatedTeam, 'Member role updated successfully'));
 });
 
-// Create task for team
-const createTask = asyncHandler(async (req, res) => {
-  const { teamId } = req.params;
-  const { name, description, assignedTo, status } = req.body;
-  const userId = req.user._id;
-
-  if (!name) {
-    throw new ApiError(400, 'Task name is required');
-  }
-
-  const team = await Team.findById(teamId);
-
-  if (!team) {
-    throw new ApiError(404, 'Team not found');
-  }
-
-  // Check if user is a member of the team
-  const isMember = team.members.some(
-    (member) => member.user.toString() === userId.toString()
-  );
-
-  if (!isMember) {
-    throw new ApiError(403, 'You are not a member of this team');
-  }
-
-  // If assignedTo is provided, verify they are a team member
-  if (assignedTo) {
-    const assigneeIsMember = team.members.some(
-      (member) => member.user.toString() === assignedTo.toString()
-    );
-
-    if (!assigneeIsMember) {
-      throw new ApiError(400, 'Assigned user is not a member of this team');
-    }
-  }
-
-  // Create task
-  const task = await Todo.create({
-    name,
-    description,
-    team: teamId,
-    assignedTo: assignedTo || null,
-    status: status || 'pending'
-  });
-
-  // Add task to team
-  team.tasks.push(task._id);
-  await team.save();
-
-  const createdTask = await Todo.findById(task._id)
-    .populate('assignedTo', 'username email fullName')
-    .populate('team', 'name');
-
-  return res
-    .status(201)
-    .json(new ApiResponse(201, createdTask, 'Task created successfully'));
-});
-
-// Get all tasks for a team
-const getTeamTasks = asyncHandler(async (req, res) => {
-  const { teamId } = req.params;
-  const userId = req.user._id;
-
-  const team = await Team.findById(teamId);
-
-  if (!team) {
-    throw new ApiError(404, 'Team not found');
-  }
-
-  // Check if user is a member of the team
-  const isMember = team.members.some(
-    (member) => member.user.toString() === userId.toString()
-  );
-
-  if (!isMember) {
-    throw new ApiError(403, 'You are not a member of this team');
-  }
-
-  const tasks = await Todo.find({ team: teamId })
-    .populate('assignedTo', 'username email fullName')
-    .sort({ createdAt: -1 });
-
-  return res
-    .status(200)
-    .json(new ApiResponse(200, tasks, 'Tasks fetched successfully'));
-});
-
-// Update task
-const updateTask = asyncHandler(async (req, res) => {
-  const { teamId, taskId } = req.params;
-  const { name, description, assignedTo, status, completed } = req.body;
-  const userId = req.user._id;
-
-  const team = await Team.findById(teamId);
-
-  if (!team) {
-    throw new ApiError(404, 'Team not found');
-  }
-
-  // Check if user is a member of the team
-  const isMember = team.members.some(
-    (member) => member.user.toString() === userId.toString()
-  );
-
-  if (!isMember) {
-    throw new ApiError(403, 'You are not a member of this team');
-  }
-
-  const task = await Todo.findOne({ _id: taskId, team: teamId });
-
-  if (!task) {
-    throw new ApiError(404, 'Task not found');
-  }
-
-  // If assignedTo is being updated, verify they are a team member
-  if (assignedTo !== undefined) {
-    if (assignedTo) {
-      const assigneeIsMember = team.members.some(
-        (member) => member.user.toString() === assignedTo.toString()
-      );
-
-      if (!assigneeIsMember) {
-        throw new ApiError(400, 'Assigned user is not a member of this team');
-      }
-    }
-    task.assignedTo = assignedTo || null;
-  }
-
-  // Update fields
-  if (name) task.name = name;
-  if (description !== undefined) task.description = description;
-  if (status) task.status = status;
-  if (completed !== undefined) task.completed = completed;
-
-  await task.save();
-
-  const updatedTask = await Todo.findById(taskId)
-    .populate('assignedTo', 'username email fullName')
-    .populate('team', 'name');
-
-  return res
-    .status(200)
-    .json(new ApiResponse(200, updatedTask, 'Task updated successfully'));
-});
-
-// Delete task
-const deleteTask = asyncHandler(async (req, res) => {
-  const { teamId, taskId } = req.params;
-  const userId = req.user._id;
-
-  const team = await Team.findById(teamId);
-
-  if (!team) {
-    throw new ApiError(404, 'Team not found');
-  }
-
-  // Check if user is a member of the team
-  const userMember = team.members.find(
-    (member) => member.user.toString() === userId.toString()
-  );
-
-  if (!userMember) {
-    throw new ApiError(403, 'You are not a member of this team');
-  }
-
-  const task = await Todo.findOne({ _id: taskId, team: teamId });
-
-  if (!task) {
-    throw new ApiError(404, 'Task not found');
-  }
-
-  // Remove task from team
-  team.tasks = team.tasks.filter(
-    (task) => task.toString() !== taskId.toString()
-  );
-  await team.save();
-
-  // Delete task
-  await Todo.findByIdAndDelete(taskId);
-
-  return res
-    .status(200)
-    .json(new ApiResponse(200, null, 'Task deleted successfully'));
-});
-
 // Leave team
 const leaveTeam = asyncHandler(async (req, res) => {
   const { teamId } = req.params;
@@ -551,9 +369,5 @@ export {
   addMember,
   removeMember,
   updateMemberRole,
-  createTask,
-  getTeamTasks,
-  updateTask,
-  deleteTask,
   leaveTeam
 };
