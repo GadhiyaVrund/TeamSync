@@ -57,6 +57,10 @@ const getUserTeams = asyncHandler(async (req, res) => {
     .populate('tasks')
     .sort({ createdAt: -1 });
 
+  if(!teams || teams.length === 0){
+    throw new ApiError(404, 'No teams found for this user');
+  }
+
   return res
     .status(200)
     .json(new ApiResponse(200, teams, 'Teams fetched successfully'));
@@ -368,6 +372,9 @@ export {
   deleteTeam,
   addMember,
   removeMember,
+
+
+  // chhela be baki chhe check karva 
   updateMemberRole,
   leaveTeam
 };
