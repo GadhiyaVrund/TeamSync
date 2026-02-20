@@ -9,10 +9,6 @@ import {
   addMember,
   removeMember,
   updateMemberRole,
-  createTask,
-  getTeamTasks,
-  updateTask,
-  deleteTask,
   leaveTeam
 } from '../controllers/team.controller.js';
 

@@ -57,9 +57,7 @@ const getUserTeams = asyncHandler(async (req, res) => {
     .populate('tasks')
     .sort({ createdAt: -1 });
 
-  if(!teams){
-    throw new ApiError(404, 'No teams found for this user');
-  }
+  
 
   return res
     .status(200)
@@ -134,6 +132,7 @@ const updateTeam = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, updatedTeam, 'Team updated successfully'));
 });
+
 
 // Delete team
 const deleteTeam = asyncHandler(async (req, res) => {
@@ -351,6 +350,9 @@ const leaveTeam = asyncHandler(async (req, res) => {
   if (userMember.role === 'admin' && adminCount === 1) {
     throw new ApiError(400, 'Cannot leave as the last admin. Promote another member or delete the team');
   }
+
+  // aya add karvanu chhe k member task complete kayra pela leave na kari sake
+
 
   // Remove user from team
   team.members = team.members.filter(
