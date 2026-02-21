@@ -53,12 +53,6 @@ const auditLogSchema = new mongoose.Schema(
       default: null
     },
 
-    // Snapshot of the task name at the time of action (for deleted tasks)
-    todoSnapshot: {
-      name: { type: String },
-      description: { type: String }
-    },
-
     // Optional human-readable note about the action
     note: {
       type: String,

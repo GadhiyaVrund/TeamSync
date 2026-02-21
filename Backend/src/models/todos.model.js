@@ -28,10 +28,6 @@ const todoSchema = new mongoose.Schema(
       enum: ['pending', 'in-progress', 'completed'],
       default: 'pending'
     },
-    completed: {
-      type: Boolean,
-      default: false
-    }
   },
   {
     timestamps: true // Creates createdAt and updatedAt fields automatically
