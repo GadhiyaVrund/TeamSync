@@ -2,6 +2,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { Todo } from "../models/todos.model.js";
+import { completeTask } from "../services/task.service.js";
 import Team from "../models/team.model.js";
 
 const createTodo = asyncHandler(async (req, res) => {
@@ -82,8 +83,47 @@ const createTodo = asyncHandler(async (req, res) => {
         .json(new ApiResponse(201, createdTodo, 'Todo created successfully'));
 });
 
+const getTodo = asyncHandler(async (req, res) => {
+    const todo = await Todo.findById(req.params.id)
+        .populate('team', 'name description')
+        .populate('assignedTo', 'username email fullName');
+
+    if (!todo) {
+        throw new ApiError(404, 'Todo not found');
+    }
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, todo, 'Todo retrieved successfully'));
+});
+
+const getAllTodos = asyncHandler(async (req, res) => {
+    const userid = req.user._id;
+    const todos = await Todo.find({ assignedTo: userid })
+        .populate('team', 'name description')
+        .populate('assignedTo', 'username email fullName');
+    
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, todos, 'Todos retrieved successfully'));
+});
+
+
+const completeTodo = asyncHandler(async (req, res) => {
+    const task = await completeTask(req.params.id, req.user._id);
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, task, 'Todo marked as completed successfully'));
+
+});
+
 
 
 export {
-    createTodo
+    createTodo,
+    completeTodo,
+    getTodo,
+    getAllTodos
 };
