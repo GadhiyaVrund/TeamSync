@@ -119,11 +119,46 @@ const completeTodo = asyncHandler(async (req, res) => {
 
 });
 
+const updateTodo = asyncHandler(async (req, res) => {
+    const { name, description, status } = req.body;
+    const uid = req.user._id;
+    const todo = await Todo.findById(req.params.id);
+
+    if (!todo) {
+        throw new ApiError(404, 'Todo not found');
+    }
+
+    const team = await Team.findById(todo.team);
+    if (!team) {
+        throw new ApiError(404, 'Team not found');
+    }
+    const isMember = team.members.some(
+        (member) => member.role === 'admin' && member.user.toString() === uid.toString()
+    );
+
+    if (!isMember) {
+        throw new ApiError(403, 'You are not authorized to update this todo');
+    }
+
+    const updatedTodo = await Todo.findByIdAndUpdate(
+        req.params.id,
+        { name, description, status },
+        { new: true }
+    )
+    .populate('team', 'name description')
+    .populate('assignedTo', 'username email fullName');
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, updatedTodo, 'Todo updated successfully'));
+});
+
 
 
 export {
     createTodo,
     completeTodo,
     getTodo,
-    getAllTodos
+    getAllTodos,
+    updateTodo
 };
