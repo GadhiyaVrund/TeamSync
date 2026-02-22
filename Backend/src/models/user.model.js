@@ -74,7 +74,7 @@ userSchema.methods.generateAccessToken = function () {
       username: this.username,
       email: this.email
     },
-    process.env.ACCESS_TOKEN_SECRET || 'your-access-token-secret',
+    process.env.ACCESS_TOKEN || 'your-access-token-secret',
     {
       expiresIn: process.env.ACCESS_TOKEN_EXPIRY || '15m'
     }
@@ -87,7 +87,7 @@ userSchema.methods.generateRefreshToken = function () {
     {
       _id: this._id
     },
-    process.env.REFRESH_TOKEN_SECRET || 'your-refresh-token-secret',
+    process.env.REFRESH_TOKEN || 'your-refresh-token-secret',
     {
       expiresIn: process.env.REFRESH_TOKEN_EXPIRY || '7d'
     }

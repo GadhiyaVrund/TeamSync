@@ -10,6 +10,7 @@ const verifyJwt = asyncHandler(async (req, res, next) => {
         throw new ApiError(401, 'Authentication token is missing');
     }
 
+    
     let decodedToken;
 
     try {

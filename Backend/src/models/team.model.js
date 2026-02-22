@@ -125,7 +125,6 @@ teamSchema.pre('save', function (next) {
       return next(new Error('Team must have at least one admin'));
     }
   }
-  next();
 });
 
 // Ensure virtuals are included when converting to JSON

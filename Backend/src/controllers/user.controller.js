@@ -118,7 +118,7 @@ const refreshAuthToken = asyncHandler(async (req, res) => {
     try {
         decodedToken = jwt.verify(
             storedRefreshToken,
-            process.env.REFRESH_TOKEN_SECRET || 'your-refresh-token-secret'
+            process.env.REFRESH_TOKEN
         );
     } catch (_error) {
         throw new ApiError(401, 'Refresh token is invalid');
