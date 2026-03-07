@@ -1,11 +1,18 @@
+import { useState } from "react";
 import { Navbar } from "../components/Navbar";
 import { Hero } from "../components/Hero";
 import { FeatureCard } from "../components/FeatureCard";
 import { Footer } from "../components/Footer";
+import { AuthModal } from "../components/AuthModal";
 import { Link } from "wouter";
 import { Users, Lock, ClipboardList, FileSearch, Activity, LineChart, CheckCircle2 } from "lucide-react";
 
 export default function LandingPage() {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("login");
+
+  const openLogin = () => { setActiveTab("login"); setIsModalOpen(true); };
+  const openRegister = () => { setActiveTab("register"); setIsModalOpen(true); };
   const features = [
     {
       icon: Users,
@@ -41,9 +48,14 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-background font-sans selection:bg-primary/20 selection:text-primary">
-      <Navbar />
+      <AuthModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        defaultTab={activeTab}
+      />
+      <Navbar onLoginClick={openLogin} onGetStartedClick={openRegister} />
       <main>
-        <Hero />
+        <Hero onGetStartedClick={openRegister} onLoginClick={openLogin} />
 
         {/* Features Section */}
         <section id="features" className="py-24 bg-gray-50/50">
@@ -164,9 +176,12 @@ export default function LandingPage() {
                   Join thousands of companies using TeamSync to get work done right.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <Link href="/app" className="bg-white text-primary hover:bg-gray-100 h-14 px-8 rounded-full text-lg font-bold shadow-lg hover:shadow-xl transition-all inline-flex items-center justify-center">
+                  <button
+                    onClick={openRegister}
+                    className="bg-white text-primary hover:bg-gray-100 h-14 px-8 rounded-full text-lg font-bold shadow-lg hover:shadow-xl transition-all inline-flex items-center justify-center"
+                  >
                     Get Started for Free
-                  </Link>
+                  </button>
                   <Link href="/login" className="bg-primary-foreground/10 text-white hover:bg-primary-foreground/20 border border-white/20 h-14 px-8 rounded-full text-lg font-bold transition-all inline-flex items-center justify-center">
                     Schedule Demo
                   </Link>

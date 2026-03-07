@@ -4,7 +4,7 @@ import cors from 'cors';
 const app = express();
 
 app.use(cors({
-    origin: '*',
+    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
     credentials: true
 }));
 app.use(express.json({ limit: '16kb' }));
@@ -17,5 +17,17 @@ import teamRoutes from './routes/team.route.js';
 
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/teams', teamRoutes);
+
+// Global JSON error handler — must be after all routes
+app.use((err, req, res, next) => {
+    const statusCode = err.statusCode || 500;
+    const message = err.message || 'Internal Server Error';
+    return res.status(statusCode).json({
+        success: false,
+        statusCode,
+        message,
+        errors: err.errors || []
+    });
+});
 
 export default app;

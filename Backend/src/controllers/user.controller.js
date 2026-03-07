@@ -36,7 +36,7 @@ const genereateAuthReftoken = async (user) =>{
     const refreshToken = user.generateRefreshToken();
 
     user.refreshToken = refreshToken;
-    await user.save({validationBeforeSave: false});
+    await user.save({ validateBeforeSave: false });
 
     return { authToken, refreshToken };
 }
@@ -67,7 +67,8 @@ const loginUser = asyncHandler(async (req, res) => {
     //store tokens in cookies 
     const rules = {
         httpOnly: true,
-        secure: true, // Set to true if using HTTPS
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
     }
 
     return res

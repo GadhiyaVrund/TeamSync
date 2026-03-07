@@ -1,7 +1,6 @@
-import { Link } from "wouter";
 import { ArrowRight, Users, Activity, ShieldCheck, CheckSquare } from "lucide-react";
 
-export function Hero() {
+export function Hero({ onGetStartedClick, onLoginClick }) {
   return (
     <section className="relative overflow-hidden pt-24 pb-32">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-background to-background"></div>
@@ -25,13 +24,19 @@ export function Hero() {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-              <Link href="/app" className="inline-flex items-center justify-center bg-primary text-primary-foreground hover:bg-primary/90 h-14 px-8 rounded-full text-base font-medium shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all">
+              <button
+                onClick={onGetStartedClick}
+                className="inline-flex items-center justify-center bg-primary text-primary-foreground hover:bg-primary/90 h-14 px-8 rounded-full text-base font-medium shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all"
+              >
                 Get Started
                 <ArrowRight className="ml-2 h-5 w-5" />
-              </Link>
-              <Link href="/login" className="inline-flex items-center justify-center bg-white border border-border text-foreground hover:bg-gray-50 h-14 px-8 rounded-full text-base font-medium shadow-sm transition-all">
+              </button>
+              <button
+                onClick={onLoginClick}
+                className="inline-flex items-center justify-center bg-white border border-border text-foreground hover:bg-gray-50 h-14 px-8 rounded-full text-base font-medium shadow-sm transition-all"
+              >
                 Login to Dashboard
-              </Link>
+              </button>
             </div>
             
             <div className="mt-10 flex items-center justify-center lg:justify-start gap-6 text-sm text-muted-foreground font-medium">

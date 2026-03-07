@@ -1,7 +1,7 @@
 import { Link } from "wouter";
 import { CheckSquare } from "lucide-react";
 
-export function Navbar() {
+export function Navbar({ onLoginClick, onGetStartedClick }) {
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-sm">
       <div className="container mx-auto flex h-16 items-center justify-between px-8">
@@ -17,12 +17,18 @@ export function Navbar() {
           <a href="#how-it-works" className="text-foreground/70 hover:text-foreground transition-colors">How it Works</a>
         </div>
         <div className="flex items-center gap-4">
-          <Link href="/login" className="text-sm font-medium hover:text-primary transition-colors px-4 py-2">
+          <button
+            onClick={onLoginClick}
+            className="text-sm font-medium hover:text-primary transition-colors px-4 py-2"
+          >
             Login
-          </Link>
-          <Link href="/app" className="bg-primary text-primary-foreground hover:bg-primary/90 px-5 py-2.5 rounded-full text-sm font-medium transition-all shadow-sm">
+          </button>
+          <button
+            onClick={onGetStartedClick}
+            className="bg-primary text-primary-foreground hover:bg-primary/90 px-5 py-2.5 rounded-full text-sm font-medium transition-all shadow-sm"
+          >
             Get Started
-          </Link>
+          </button>
         </div>
       </div>
     </nav>

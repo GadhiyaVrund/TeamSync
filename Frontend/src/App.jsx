@@ -1,13 +1,11 @@
 import { Switch, Route } from "wouter";
 import LandingPage from "./pages/LandingPage";
-import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 
 function App() {
   return (
     <Switch>
       <Route path="/" component={LandingPage} />
-      <Route path="/login" component={LoginPage} />
       <Route path="/app" component={DashboardPage} />
       <Route>
         <div className="flex min-h-screen items-center justify-center bg-gray-50">
