@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { CheckSquare, X, Eye, EyeOff } from "lucide-react";
-
-const API_URL = import.meta.env.VITE_API_URL;
+import { loginUser, registerUser } from "../apis/auth.api";
 
 export function AuthModal({ isOpen, onClose, defaultTab = "login" }) {
   const [tab, setTab] = useState(defaultTab);
@@ -65,18 +64,11 @@ export function AuthModal({ isOpen, onClose, defaultTab = "login" }) {
     setLoginError("");
     setLoginLoading(true);
     try {
-      const res = await fetch(`${API_URL}/api/v1/users/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(loginData),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Login failed");
+      await loginUser(loginData);
       onClose();
       navigate("/app");
     } catch (err) {
-      setLoginError(err.message);
+      setLoginError(err.response?.data?.message || err.message || "Login failed");
     } finally {
       setLoginLoading(false);
     }
@@ -87,35 +79,20 @@ export function AuthModal({ isOpen, onClose, defaultTab = "login" }) {
     setRegisterError("");
     setRegisterLoading(true);
     try {
-      const res = await fetch(`${API_URL}/api/v1/users/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(registerData),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Registration failed");
+      await registerUser(registerData);
 
       // Auto-login after successful registration
-      const loginRes = await fetch(`${API_URL}/api/v1/users/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          email: registerData.email,
-          password: registerData.password,
-        }),
-      });
-      if (loginRes.ok) {
+      try {
+        await loginUser({ email: registerData.email, password: registerData.password });
         onClose();
         navigate("/app");
-      } else {
+      } catch {
         // Registration succeeded but auto-login failed — send to login tab
         setTab("login");
         setLoginData({ email: registerData.email, password: "" });
       }
     } catch (err) {
-      setRegisterError(err.message);
+      setRegisterError(err.response?.data?.message || err.message || "Registration failed");
     } finally {
       setRegisterLoading(false);
     }
