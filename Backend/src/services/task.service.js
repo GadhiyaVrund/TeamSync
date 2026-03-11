@@ -1,9 +1,10 @@
-import { ApiError } from "../utils/ApiError";
-import Todo from "../models/todos.model.js";
+import { ApiError } from "../utils/ApiError.js";
+import { Todo } from "../models/todos.model.js";
 import { AuditLog } from "../models/auditLog.model.js";
 import { Team } from "../models/team.model.js";
 
 const completeTask = async(taskid, userId) => { 
+
 
     if(!(taskid && userId)) {  
         throw new ApiError(400, 'Task ID and User ID are required');

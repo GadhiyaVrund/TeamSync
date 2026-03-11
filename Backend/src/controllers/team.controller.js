@@ -54,7 +54,7 @@ const getUserTeams = asyncHandler(async (req, res) => {
 
   const teams = await Team.find({ 'members.user': userId })
     .populate('members.user', 'username email fullName')
-    .populate('tasks')
+    .populate({ path: 'tasks', options: { sort: { createdAt: -1 } } })
     .sort({ createdAt: -1 });
 
   
@@ -75,8 +75,9 @@ const getTeamById = asyncHandler(async (req, res) => {
       path: 'tasks',
       populate: {
         path: 'assignedTo',
-        select: 'username email fullName'
-      }
+        select: 'username'
+      },
+      options: { sort: { createdAt: -1 } }
     });
 
   if (!team) {

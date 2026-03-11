@@ -3,14 +3,17 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { Todo } from "../models/todos.model.js";
 import { completeTask } from "../services/task.service.js";
-import Team from "../models/team.model.js";
+import { Team } from "../models/team.model.js";
 
 const createTodo = asyncHandler(async (req, res) => {
     const { name, description, team, assignedTo, status } = req.body;
     const userId = req.user._id;
 
+
+    const trimmedName = name ? name.trim() : '';
+    const trimmedDescription = description ? description.trim() : '';
     // Validate required fields
-    if (!name || !name.trim()) {
+    if (!trimmedName ) {
         throw new ApiError(400, 'Todo name is required');
     }
 
@@ -19,32 +22,33 @@ const createTodo = asyncHandler(async (req, res) => {
     }
 
     // Validate name length
-    if (name.length > 100) {
+    if (trimmedName.length > 100) {
         throw new ApiError(400, 'Todo name cannot exceed 100 characters');
     }
 
     // Validate description length if provided
-    if (description && description.length > 500) {
+    if (trimmedDescription && trimmedDescription.length > 500) {
         throw new ApiError(400, 'Description cannot exceed 500 characters');
     }
 
     // Validate status if provided
-    const validStatuses = ['pending', 'in-progress', 'completed'];
+    const validStatuses = ['to-do', 'in-progress', 'in-review', 'completed'];
     if (status && !validStatuses.includes(status)) {
         throw new ApiError(400, `Status must be one of: ${validStatuses.join(', ')}`);
     }
 
     // Check if team exists
-    const teamExists = await Team.findById(team);
+    const teamExists = await Team.findById(team).select('members tasks');
+
     if (!teamExists) {
         throw new ApiError(404, 'Team not found');
     }
-
+    
     // Check if user is a member of the team
     const isMember = teamExists.members.some(
         (member) => member.user.toString() === userId.toString()
     );
-
+    
     if (!isMember) {
         throw new ApiError(403, 'You must be a member of the team to create tasks');
     }
@@ -62,21 +66,22 @@ const createTodo = asyncHandler(async (req, res) => {
 
     // Create the todo
     const todo = await Todo.create({
-        name: name.trim(),
-        description: description ? description.trim() : undefined,
+        name: trimmedName,
+        description: trimmedDescription || undefined,
         team,
         assignedTo: assignedTo || null,
-        status: status || 'pending'
+        status: status || 'in-progress'
     });
 
+    
     // Add todo to team's tasks array
     teamExists.tasks.push(todo._id);
     await teamExists.save();
 
     // Fetch the created todo with populated fields
     const createdTodo = await Todo.findById(todo._id)
-        .populate('team', 'name description')
-        .populate('assignedTo', 'username email fullName');
+        .populate('assignedTo', 'username')
+        .select('_id name description status assignedTo createdAt');
 
     return res
         .status(201)
@@ -133,11 +138,11 @@ const updateTodo = asyncHandler(async (req, res) => {
         throw new ApiError(404, 'Team not found');
     }
     const isMember = team.members.some(
-        (member) => member.role === 'admin' && member.user.toString() === uid.toString()
+        (member) => member.user.toString() === uid.toString()
     );
 
     if (!isMember) {
-        throw new ApiError(403, 'You are not authorized to update this todo');
+        throw new ApiError(403, 'You are not a member of this team');
     }
 
     const updatedTodo = await Todo.findByIdAndUpdate(

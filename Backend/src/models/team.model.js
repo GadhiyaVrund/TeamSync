@@ -58,12 +58,12 @@ teamSchema.index({ 'members.user': 1 });
 
 // Virtual to get member count
 teamSchema.virtual('memberCount').get(function () {
-  return this.members.length;
+  return this.members?.length ?? 0;
 });
 
 // Virtual to get task count
 teamSchema.virtual('taskCount').get(function () {
-  return this.tasks.length;
+  return this.tasks?.length ?? 0;
 });
 
 // Method to add member to team
@@ -118,13 +118,14 @@ teamSchema.statics.findByMember = function (userId) {
 };
 
 // Pre-save middleware to ensure at least one admin
-teamSchema.pre('save', function (next) {
-  if (this.members.length > 0) {
+teamSchema.pre('save', function () {
+  if (this.members?.length > 0) {
     const hasAdmin = this.members.some((member) => member.role === 'admin');
     if (!hasAdmin) {
       return next(new Error('Team must have at least one admin'));
     }
   }
+  
 });
 
 // Ensure virtuals are included when converting to JSON
