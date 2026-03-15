@@ -1,16 +1,12 @@
 import { useState } from "react";
 import { Search, Bell, SlidersHorizontal, X } from "lucide-react";
+import { getInitials, getAvatarColor } from "../../utils/avatar";
 
 const HEADER_TABS = [
-  { id: "company",  label: "Company Tasks"   },
+  { id: "company",  label: "Team Tasks"   },
   { id: "my-tasks", label: "My Tasks"         },
   { id: "sprint",   label: "Current Sprint"   },
   { id: "timeline", label: "Timeline"         },
-];
-
-const AVATAR_COLORS = [
-  "bg-violet-500", "bg-sky-500", "bg-emerald-500",
-  "bg-amber-500",  "bg-rose-500", "bg-indigo-500",
 ];
 
 export default function Header({ activeTab, setActiveTab, currentUser }) {
@@ -19,10 +15,8 @@ export default function Header({ activeTab, setActiveTab, currentUser }) {
   const [notifCount] = useState(3);
 
   const username = currentUser?.username || "";
-  const initials = username.slice(0, 2).toUpperCase() || "?";
-  const avatarColor = username
-    ? AVATAR_COLORS[username.charCodeAt(0) % AVATAR_COLORS.length]
-    : "bg-gray-400";
+  const initials = username ? getInitials(username) : "?";
+  const avatarColor = username ? getAvatarColor(username) : "bg-gray-400";
 
   return (
     <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-5 shrink-0 gap-4">

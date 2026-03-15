@@ -1,7 +1,9 @@
 ﻿import { useState, useRef, useEffect, useCallback } from "react";
 import { Plus } from "lucide-react";
 import KanbanColumn from "./KanbanColumn";
-import { updateTodo } from "../../apis/todo.api";
+import { KanbanBoardSkeleton } from "./DashboardSkeletons";
+import MyTasksByTeam from "./MyTasksByTeam";
+import { moveTodo } from "../../apis/todo.api";
 
 const COLUMN_CONFIG = {
   todo:       { id: "todo",       title: "To Do",      color: "bg-slate-400"    },
@@ -13,6 +15,7 @@ const COLUMN_CONFIG = {
 const COLUMN_ORDER = ["todo", "inprogress", "inreview", "completed"];
 
 const STATUS_TO_COLUMN = {
+  "to-do":       "todo",
   "pending":     "todo",
   "in-progress": "inprogress",
   "in-review":   "inreview",
@@ -20,7 +23,7 @@ const STATUS_TO_COLUMN = {
 };
 
 const COLUMN_TO_STATUS = {
-  "todo":       "pending",
+  "todo":       "to-do",
   "inprogress": "in-progress",
   "inreview":   "in-review",
   "completed":  "completed",
@@ -37,7 +40,7 @@ function buildColumns(tasks = []) {
   return cols;
 }
 
-export default function KanbanBoard({ activeTab, selectedTeam, onNewTask }) {
+export default function KanbanBoard({ activeTab, selectedTeam, onNewTask, loading = false }) {
   const [columns, setColumns] = useState(() => buildColumns(selectedTeam?.tasks));
   const [movingTaskId, setMovingTaskId] = useState(null);
   const dragTaskId = useRef(null);
@@ -84,7 +87,7 @@ export default function KanbanBoard({ activeTab, selectedTeam, onNewTask }) {
     if (newStatus) {
       setMovingTaskId(taskId);
       try {
-        await updateTodo(taskId, { status: newStatus });
+        await moveTodo(taskId, newStatus);
       } catch (err) {
         console.error("Failed to update task status:", err);
         // Revert on failure
@@ -98,6 +101,14 @@ export default function KanbanBoard({ activeTab, selectedTeam, onNewTask }) {
   const totalTasks = Object.values(columns).reduce((acc, col) => acc + col.tasks.length, 0);
   const completedTasks = columns.completed?.tasks.length ?? 0;
   const progress = totalTasks ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+  if (activeTab === "my-tasks") {
+    return <MyTasksByTeam />;
+  }
+
+  if (loading) {
+    return <KanbanBoardSkeleton />;
+  }
 
   return (
     <div className="flex flex-col h-full">

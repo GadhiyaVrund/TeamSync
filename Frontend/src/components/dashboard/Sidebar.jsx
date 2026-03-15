@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { Link } from "wouter";
+import { getInitials, getAvatarColor } from "../../utils/avatar";
+import { TeamListSkeleton } from "./DashboardSkeletons";
 import {
   Home,
   CheckSquare,
@@ -28,26 +30,6 @@ const PRIVATE_ITEMS = [
   { id: "personal", label: "Personal Tasks", icon: User     },
 ];
 
-const AVATAR_COLORS = [
-  "bg-violet-500", "bg-sky-500", "bg-emerald-500",
-  "bg-amber-500",  "bg-rose-500", "bg-indigo-500",
-];
-
-/** Returns 1-2 uppercase initials from a username.
- *  alex_johnson → AJ   |  alexjohnson → AL   |  alex → AL
- */
-function getInitials(username = "") {
-  if (!username) return "";
-  const parts = username.trim().split(/[_\-.\s]+/).filter(Boolean);
-  if (parts.length >= 2) {
-    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-  }
-  return username.slice(0, 2).toUpperCase();
-}
-
-function getAvatarColor(username = "") {
-  return AVATAR_COLORS[(username.charCodeAt(0) || 0) % AVATAR_COLORS.length];
-}
 
 /** Nicely capitalize a lowercase username for display: alexjohnson → Alexjohnson */
 function displayName(username = "") {
@@ -75,7 +57,7 @@ function NavItem({ icon: Icon, label, active, onClick, indent = false }) {
 
 export default function Sidebar({
   activeNav, setActiveNav, collapsed, setCollapsed,
-  teams = [], selectedTeamId, onSelectTeam, onCreateTeam, currentUser,
+  teams = [], selectedTeamId, onSelectTeam, onCreateTeam, currentUser, teamsLoading = false,
 }) {
   const [teamspacesOpen, setTeamspacesOpen] = useState(true);
   const [privateOpen, setPrivateOpen] = useState(true);
@@ -181,22 +163,26 @@ export default function Sidebar({
               </button>
             </button>
             {teamspacesOpen && (
-              <div className="mt-1 space-y-0.5">
-                {teams.length === 0 ? (
-                  <p className="pl-7 py-1 text-xs text-gray-400">No teams yet</p>
-                ) : (
-                  teams.map((team) => (
-                    <NavItem
-                      key={team._id}
-                      icon={Users}
-                      label={team.name}
-                      active={selectedTeamId === team._id}
-                      onClick={() => onSelectTeam(team._id)}
-                      indent
-                    />
-                  ))
-                )}
-              </div>
+              teamsLoading ? (
+                <TeamListSkeleton />
+              ) : (
+                <div className="mt-1 space-y-0.5">
+                  {teams.length === 0 ? (
+                    <p className="pl-7 py-1 text-xs text-gray-400">No teams yet</p>
+                  ) : (
+                    teams.map((team) => (
+                      <NavItem
+                        key={team._id}
+                        icon={Users}
+                        label={team.name}
+                        active={selectedTeamId === team._id}
+                        onClick={() => onSelectTeam(team._id)}
+                        indent
+                      />
+                    ))
+                  )}
+                </div>
+              )
             )}
           </div>
         )}

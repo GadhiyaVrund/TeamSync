@@ -5,6 +5,7 @@ import {
     getAllTodos,
     updateTodo,
     completeTodo,
+    moveTodo,
 } from "../controllers/todo.controller.js";
 import { verifyJwt } from "../middleware/auth.middleware.js";
 
@@ -21,5 +22,6 @@ router.route("/:id")
     .put(updateTodo);
 
 router.route("/:id/complete").patch(completeTodo);
+router.route("/:id/move").patch(moveTodo);
 
 export default router;

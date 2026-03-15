@@ -3,6 +3,8 @@ import { Todo } from "../models/todos.model.js";
 import { AuditLog } from "../models/auditLog.model.js";
 import { Team } from "../models/team.model.js";
 
+const VALID_STATUSES = ['to-do', 'in-progress', 'in-review', 'completed'];
+
 const completeTask = async(taskid, userId) => { 
 
 
@@ -53,6 +55,133 @@ const completeTask = async(taskid, userId) => {
     return task;
 }
 
+const addTodoUpdatedAuditLog = async ({ taskId, performedBy, teamId, previousStatus = null, newStatus = null }) => {
+    if (!(taskId && performedBy && teamId)) {
+        throw new ApiError(400, 'Task ID, performer, and team are required');
+    }
+
+    return AuditLog.create({
+        action: 'updated',
+        performedBy,
+        todo: taskId,
+        team: teamId,
+        previousStatus,
+        newStatus,
+    });
+};
+
+const addTaskMoveAuditLog = async ({ taskId, performedBy, fromStatus, toStatus, teamId }) => {
+    if (!(taskId && performedBy && teamId)) {
+        throw new ApiError(400, 'Task ID, performer, and team are required');
+    }
+
+    if (!toStatus || fromStatus === toStatus) {
+        return null;
+    }
+
+    if (!VALID_STATUSES.includes(toStatus)) {
+        throw new ApiError(400, 'Invalid target status');
+    }
+
+    return AuditLog.create({
+        action: 'status_changed',
+        performedBy,
+        todo: taskId,
+        team: teamId,
+        previousStatus: fromStatus ?? null,
+        newStatus: toStatus,
+    });
+};
+
+const logTaskColumnMove = async (taskId, userId, nextStatus) => {
+    if (!(taskId && userId && nextStatus)) {
+        throw new ApiError(400, 'Task ID, user ID and next status are required');
+    }
+
+    if (!VALID_STATUSES.includes(nextStatus)) {
+        throw new ApiError(400, 'Invalid target status');
+    }
+
+    const task = await Todo.findById(taskId);
+    if (!task) {
+        throw new ApiError(404, 'Task not found');
+    }
+
+    const team = await Team.findById(task.team);
+    if (!team) {
+        throw new ApiError(404, 'Team not found');
+    }
+
+    const isMember = team.members.some(
+        (member) => member.user.toString() === userId.toString()
+    );
+
+    if (!isMember) {
+        throw new ApiError(403, 'You are not a member of this team');
+    }
+
+    return addTaskMoveAuditLog({
+        taskId: task._id,
+        performedBy: userId,
+        fromStatus: task.status,
+        toStatus: nextStatus,
+        teamId: task.team,
+    });
+};
+
+const moveTask = async (taskId, userId, nextStatus) => {
+    if (!(taskId && userId && nextStatus)) {
+        throw new ApiError(400, 'Task ID, user ID and next status are required');
+    }
+
+    const normalizedStatus = nextStatus === 'pending' ? 'to-do' : nextStatus;
+
+    if (!VALID_STATUSES.includes(normalizedStatus)) {
+        throw new ApiError(400, 'Invalid target status');
+    }
+
+    const task = await Todo.findById(taskId);
+    if (!task) {
+        throw new ApiError(404, 'Task not found');
+    }
+
+    const team = await Team.findById(task.team);
+    if (!team) {
+        throw new ApiError(404, 'Team not found');
+    }
+
+    const isMember = team.members.some(
+        (member) => member.user.toString() === userId.toString()
+    );
+
+    if (!isMember) {
+        throw new ApiError(403, 'You are not a member of this team');
+    }
+
+    const previousStatus = task.status;
+    task.status = normalizedStatus;
+    await task.save();
+
+    await addTaskMoveAuditLog({
+        taskId: task._id,
+        performedBy: userId,
+        fromStatus: previousStatus,
+        toStatus: normalizedStatus,
+        teamId: task.team,
+    });
+
+    return Todo.findById(task._id)
+        .populate('team', 'name description')
+        .populate('assignedTo', 'username email fullName');
+};
+
+
+
+
 export {
-    completeTask    
+    completeTask,
+    addTodoUpdatedAuditLog,
+    addTaskMoveAuditLog,
+    logTaskColumnMove,
+    moveTask,
 };

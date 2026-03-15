@@ -2,7 +2,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { Todo } from "../models/todos.model.js";
-import { completeTask } from "../services/task.service.js";
+import { completeTask, moveTask } from "../services/task.service.js";
 import { Team } from "../models/team.model.js";
 
 const createTodo = asyncHandler(async (req, res) => {
@@ -113,7 +113,7 @@ const getAllTodos = asyncHandler(async (req, res) => {
         .status(200)
         .json(new ApiResponse(200, todos, 'Todos retrieved successfully'));
 });
-
+  
 
 const completeTodo = asyncHandler(async (req, res) => {
     const task = await completeTask(req.params.id, req.user._id);
@@ -158,6 +158,15 @@ const updateTodo = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, updatedTodo, 'Todo updated successfully'));
 });
 
+    const moveTodo = asyncHandler(async (req, res) => {
+        const { status } = req.body;
+        const updatedTodo = await moveTask(req.params.id, req.user._id, status);
+
+        return res
+        .status(200)
+        .json(new ApiResponse(200, updatedTodo, 'Todo moved successfully'));
+    });
+
 
 
 export {
@@ -165,5 +174,6 @@ export {
     completeTodo,
     getTodo,
     getAllTodos,
-    updateTodo
+    updateTodo,
+    moveTodo,
 };

@@ -42,22 +42,14 @@ const auditLogSchema = new mongoose.Schema(
     // Task status before the action
     previousStatus: {
       type: String,
-      enum: ['pending', 'in-progress', 'completed', null],
+      enum: ['to-do', 'pending', 'in-progress', 'in-review', 'completed', null],
       default: null
     },
 
     // Task status after the action
     newStatus: {
       type: String,
-      enum: ['pending', 'in-progress', 'completed', null],
-      default: null
-    },
-
-    // Optional human-readable note about the action
-    note: {
-      type: String,
-      trim: true,
-      maxlength: [300, 'Note cannot exceed 300 characters'],
+      enum: ['to-do', 'pending', 'in-progress', 'in-review', 'completed', null],
       default: null
     },
   },

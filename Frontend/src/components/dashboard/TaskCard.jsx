@@ -1,14 +1,11 @@
 import { Calendar } from "lucide-react";
+import { getInitials, getAvatarColor } from "../../utils/avatar";
 
-const AVATAR_COLORS = [
-  "bg-violet-500", "bg-sky-500", "bg-emerald-500",
-  "bg-amber-500",  "bg-rose-500", "bg-indigo-500",
-];
 
 function Avatar({ user }) {
   if (!user) return null;
-  const initials = user.username.slice(0, 2).toUpperCase();
-  const color = AVATAR_COLORS[user.username.charCodeAt(0) % AVATAR_COLORS.length];
+  const initials = getInitials(user.username);
+  const color = getAvatarColor(user.username);
   return (
     <div
       className={`h-6 w-6 rounded-full ${color} flex items-center justify-center text-white text-[10px] font-bold shrink-0`}
