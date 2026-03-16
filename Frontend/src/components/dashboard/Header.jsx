@@ -6,7 +6,6 @@ const HEADER_TABS = [
   { id: "company",  label: "Team Tasks"   },
   { id: "my-tasks", label: "My Tasks"         },
   { id: "sprint",   label: "Current Sprint"   },
-  { id: "timeline", label: "Timeline"         },
 ];
 
 export default function Header({ activeTab, setActiveTab, currentUser }) {
@@ -67,25 +66,9 @@ export default function Header({ activeTab, setActiveTab, currentUser }) {
           )}
         </div>
 
-        {/* Filters */}
-        <button
-          className="flex items-center gap-1.5 px-2.5 py-1.5 text-sm text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
-          title="Filters"
-        >
-          <SlidersHorizontal className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline">Filters</span>
-        </button>
+        
 
-        {/* Notifications */}
-        <button
-          className="relative p-1.5 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
-          title="Notifications"
-        >
-          <Bell className="h-4 w-4" />
-          {notifCount > 0 && (
-            <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500 ring-1 ring-white" />
-          )}
-        </button>
+       
 
         {/* Divider */}
         <div className="h-5 w-px bg-gray-200" />

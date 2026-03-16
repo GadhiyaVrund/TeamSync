@@ -43,12 +43,36 @@ function buildColumns(tasks = []) {
 export default function KanbanBoard({ activeTab, selectedTeam, onNewTask, loading = false }) {
   const [columns, setColumns] = useState(() => buildColumns(selectedTeam?.tasks));
   const [movingTaskId, setMovingTaskId] = useState(null);
+  const [toastMessage, setToastMessage] = useState("");
   const dragTaskId = useRef(null);
   const dragSourceColumnId = useRef(null);
+  const toastTimerRef = useRef(null);
+
+  const showToast = useCallback((message) => {
+    if (!message) return;
+    setToastMessage(message);
+
+    if (toastTimerRef.current) {
+      clearTimeout(toastTimerRef.current);
+    }
+
+    toastTimerRef.current = setTimeout(() => {
+      setToastMessage("");
+      toastTimerRef.current = null;
+    }, 3000);
+  }, []);
 
   useEffect(() => {
     setColumns(buildColumns(selectedTeam?.tasks));
   }, [selectedTeam]);
+
+  useEffect(() => {
+    return () => {
+      if (toastTimerRef.current) {
+        clearTimeout(toastTimerRef.current);
+      }
+    };
+  }, []);
 
   const handleDragStart = useCallback((e, taskId) => {
     const sourceColumn = Object.values(columns).find((col) =>
@@ -90,13 +114,14 @@ export default function KanbanBoard({ activeTab, selectedTeam, onNewTask, loadin
         await moveTodo(taskId, newStatus);
       } catch (err) {
         console.error("Failed to update task status:", err);
+        showToast(err?.response?.data?.message || "Failed to move task");
         // Revert on failure
         setColumns(snapshot);
       } finally {
         setMovingTaskId(null);
       }
     }
-  }, [columns]);
+  }, [columns, showToast]);
 
   const totalTasks = Object.values(columns).reduce((acc, col) => acc + col.tasks.length, 0);
   const completedTasks = columns.completed?.tasks.length ?? 0;
@@ -112,6 +137,11 @@ export default function KanbanBoard({ activeTab, selectedTeam, onNewTask, loadin
 
   return (
     <div className="flex flex-col h-full">
+      {toastMessage && (
+        <div className="fixed top-5 right-5 z-50 max-w-sm rounded-lg border border-red-200 bg-white px-4 py-3 shadow-lg">
+          <p className="text-sm font-medium text-red-600">{toastMessage}</p>
+        </div>
+      )}
 
       {/* Meta bar: team name + New Task button + progress */}
       <div className="flex items-center justify-between mb-5 px-1 shrink-0">

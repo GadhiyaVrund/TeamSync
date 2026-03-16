@@ -4,6 +4,34 @@ import { AuditLog } from "../models/auditLog.model.js";
 import { Team } from "../models/team.model.js";
 
 const VALID_STATUSES = ['to-do', 'in-progress', 'in-review', 'completed'];
+const ROLE_ADMIN = 'admin';
+const ROLE_MANAGER = 'manager';
+
+const getStatusIndex = (status) => VALID_STATUSES.indexOf(status);
+
+const findTeamMember = (team, userId) =>
+    team.members.find((member) => member.user.toString() === userId.toString());
+
+const validateTaskMove = ({ role, fromStatus, toStatus }) => {
+    if (fromStatus === toStatus) {
+        return;
+    }
+
+    if (fromStatus === 'completed' && role == ROLE_ADMIN) {
+        return;
+    }
+
+    if ((role === ROLE_MANAGER || role === ROLE_ADMIN) && fromStatus === 'in-review' && toStatus === 'in-progress') {
+        return;
+    }
+
+    const currentIndex = getStatusIndex(fromStatus);
+    const targetIndex = getStatusIndex(toStatus);
+
+    if (targetIndex !== currentIndex + 1) {
+        throw new ApiError(400, `Invalid move: ${fromStatus} can only move to next stage`);
+    }
+};
 
 const completeTask = async(taskid, userId) => { 
 
@@ -98,7 +126,9 @@ const logTaskColumnMove = async (taskId, userId, nextStatus) => {
         throw new ApiError(400, 'Task ID, user ID and next status are required');
     }
 
-    if (!VALID_STATUSES.includes(nextStatus)) {
+    const normalizedStatus = nextStatus === 'pending' ? 'to-do' : nextStatus;
+
+    if (!VALID_STATUSES.includes(normalizedStatus)) {
         throw new ApiError(400, 'Invalid target status');
     }
 
@@ -112,19 +142,23 @@ const logTaskColumnMove = async (taskId, userId, nextStatus) => {
         throw new ApiError(404, 'Team not found');
     }
 
-    const isMember = team.members.some(
-        (member) => member.user.toString() === userId.toString()
-    );
+    const member = findTeamMember(team, userId);
 
-    if (!isMember) {
+    if (!member) {
         throw new ApiError(403, 'You are not a member of this team');
     }
+
+    validateTaskMove({
+        role: member.role,
+        fromStatus: task.status,
+        toStatus: normalizedStatus,
+    });
 
     return addTaskMoveAuditLog({
         taskId: task._id,
         performedBy: userId,
         fromStatus: task.status,
-        toStatus: nextStatus,
+        toStatus: normalizedStatus,
         teamId: task.team,
     });
 };
@@ -150,13 +184,17 @@ const moveTask = async (taskId, userId, nextStatus) => {
         throw new ApiError(404, 'Team not found');
     }
 
-    const isMember = team.members.some(
-        (member) => member.user.toString() === userId.toString()
-    );
+    const member = findTeamMember(team, userId);
 
-    if (!isMember) {
+    if (!member) {
         throw new ApiError(403, 'You are not a member of this team');
     }
+
+    validateTaskMove({
+        role: member.role,
+        fromStatus: task.status,
+        toStatus: normalizedStatus,
+    });
 
     const previousStatus = task.status;
     task.status = normalizedStatus;

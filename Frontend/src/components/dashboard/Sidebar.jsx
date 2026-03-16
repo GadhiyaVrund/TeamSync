@@ -7,8 +7,6 @@ import {
   CheckSquare,
   Zap,
   CalendarDays,
-  FileText,
-  User,
   Users,
   ChevronDown,
   ChevronRight,
@@ -22,13 +20,9 @@ const NAV_ITEMS = [
   { id: "home",     label: "Home",           icon: Home         },
   { id: "my-tasks", label: "My Tasks",        icon: CheckSquare  },
   { id: "sprint",   label: "Current Sprint",  icon: Zap          },
-  { id: "timeline", label: "Timeline",        icon: CalendarDays },
 ];
 
-const PRIVATE_ITEMS = [
-  { id: "notes",    label: "My Notes",       icon: FileText },
-  { id: "personal", label: "Personal Tasks", icon: User     },
-];
+
 
 
 /** Nicely capitalize a lowercase username for display: alexjohnson → Alexjohnson */
@@ -60,7 +54,7 @@ export default function Sidebar({
   teams = [], selectedTeamId, onSelectTeam, onCreateTeam, currentUser, teamsLoading = false,
 }) {
   const [teamspacesOpen, setTeamspacesOpen] = useState(true);
-  const [privateOpen, setPrivateOpen] = useState(true);
+  
 
   const username = currentUser?.username || "";
   const initials = getInitials(username);
@@ -187,39 +181,7 @@ export default function Sidebar({
           </div>
         )}
 
-        {/* Private */}
-        {!collapsed && (
-          <div className="pt-4">
-            <button
-              onClick={() => setPrivateOpen(!privateOpen)}
-              className="w-full flex items-center gap-1 px-3 py-1 text-xs font-semibold text-gray-400 uppercase tracking-wider hover:text-gray-600 transition-colors"
-            >
-              {privateOpen ? (
-                <ChevronDown className="h-3 w-3" />
-              ) : (
-                <ChevronRight className="h-3 w-3" />
-              )}
-              Private
-            </button>
-            {privateOpen && (
-              <div className="mt-1 space-y-0.5">
-                {PRIVATE_ITEMS.map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <NavItem
-                      key={item.id}
-                      icon={Icon}
-                      label={item.label}
-                      active={activeNav === item.id}
-                      onClick={() => setActiveNav(item.id)}
-                      indent
-                    />
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
+       
       </div>
 
       {/* User footer */}
