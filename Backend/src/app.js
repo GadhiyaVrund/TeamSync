@@ -15,10 +15,14 @@ app.use(cookieParser());
 import userRoutes from './routes/user.route.js';
 import teamRoutes from './routes/team.route.js';
 import todoRoutes from './routes/todo.route.js';
+import teamInviteRoutes from './routes/teaminvite.route.js';
+import joinRequestRoutes from './routes/joinRequest.route.js';
 
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/teams', teamRoutes);
 app.use('/api/v1/todos', todoRoutes);
+app.use('/api/v1/team-invites', teamInviteRoutes);
+app.use('/api/v1/join-requests', joinRequestRoutes);
 
 // Global JSON error handler — must be after all routes
 app.use((err, req, res, next) => {
