@@ -7,12 +7,6 @@ const teamInviteSchema = new mongoose.Schema(
       ref: 'Team',
       required: [true, 'Team reference is required']
     },
-    token: {
-      type: String,
-      required: [true, 'Invite token is required'],
-      unique: true,
-      trim: true
-    },
     email: {
       type: String,
       default: null,
@@ -49,6 +43,6 @@ const teamInviteSchema = new mongoose.Schema(
   }
 );
 
-teamInviteSchema.index({ token: 1, expiresAt: 1 });
+teamInviteSchema.index({ expiresAt: 1 });
 
 export const TeamInvite = mongoose.model('TeamInvite', teamInviteSchema);

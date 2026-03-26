@@ -113,7 +113,7 @@ const getAllTodos = asyncHandler(async (req, res) => {
         .status(200)
         .json(new ApiResponse(200, todos, 'Todos retrieved successfully'));
 });
-  
+
 
 const completeTodo = asyncHandler(async (req, res) => {
     const task = await completeTask(req.params.id, req.user._id);
@@ -158,14 +158,14 @@ const updateTodo = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, updatedTodo, 'Todo updated successfully'));
 });
 
-    const moveTodo = asyncHandler(async (req, res) => {
-        const { status } = req.body;
-        const updatedTodo = await moveTask(req.params.id, req.user._id, status);
+const moveTodo = asyncHandler(async (req, res) => {
+    const { status } = req.body;
+    const updatedTodo = await moveTask(req.params.id, req.user._id, status);
 
-        return res
-        .status(200)
-        .json(new ApiResponse(200, updatedTodo, 'Todo moved successfully'));
-    });
+    return res
+    .status(200)
+    .json(new ApiResponse(200, updatedTodo, 'Todo moved successfully'));
+});
 
 
 

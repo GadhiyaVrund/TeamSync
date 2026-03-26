@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Search, Bell, SlidersHorizontal, X } from "lucide-react";
+import NotificationPanel from "./NotificationPanel";
 import { getInitials, getAvatarColor } from "../../utils/avatar";
 
 const HEADER_TABS = [
@@ -11,7 +12,8 @@ const HEADER_TABS = [
 export default function Header({ activeTab, setActiveTab, currentUser }) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [notifCount] = useState(3);
+  const [notificationOpen, setNotificationOpen] = useState(false);
+  const [notificationCount, setNotificationCount] = useState(0);
 
   const username = currentUser?.username || "";
   const initials = username ? getInitials(username) : "?";
@@ -66,12 +68,29 @@ export default function Header({ activeTab, setActiveTab, currentUser }) {
           )}
         </div>
 
-        
-
-       
-
         {/* Divider */}
         <div className="h-5 w-px bg-gray-200" />
+
+        {/* Notifications */}
+        <div className="relative">
+          <button
+            onClick={() => setNotificationOpen((prev) => !prev)}
+            className="relative p-1.5 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+            title="Notifications"
+          >
+            <Bell className="h-4 w-4" />
+            {notificationCount > 0 && (
+              <span className="absolute -top-1 -right-1 h-4 min-w-4 rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white flex items-center justify-center">
+                {notificationCount}
+              </span>
+            )}
+          </button>
+          <NotificationPanel
+            isOpen={notificationOpen}
+            onClose={() => setNotificationOpen(false)}
+            onCountChange={setNotificationCount}
+          />
+        </div>
 
         
         <div

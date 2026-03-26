@@ -1,5 +1,8 @@
 import {asyncHandler} from '../utils/asyncHandler.js';
 import { User } from '../models/user.model.js';
+import { Team } from '../models/team.model.js';
+import { JoinRequest } from '../models/joinRequest.model.js';
+import { TeamInvite } from '../models/teamInvite.model.js';
 import {ApiError} from '../utils/ApiError.js';
 import {ApiResponse} from '../utils/ApiResponse.js';
 import jwt from 'jsonwebtoken';
@@ -210,6 +213,55 @@ const deleteUser = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, 'Account deleted successfully'));
 });
 
+const getUserNotifications = asyncHandler(async (req, res) => {
+
+    const userId = req.user._id;
+    const userEmail = req.user.email;
+
+    const adminTeams = await Team.find({
+        members: { $elemMatch: { user: userId, role: 'admin' } }
+    }).select('_id name');
+
+    const adminTeamIds = adminTeams.map((team) => team._id);
+
+    const joinRequestsPromise = adminTeamIds.length
+        ? JoinRequest.find({
+            teamId: { $in: adminTeamIds },
+            status: 'pending'
+        })
+            .populate('teamId', 'name')
+            .populate('userId', 'username email')
+            .sort({ createdAt: -1 })
+        : Promise.resolve([]);
+
+    const teamInvitesPromise = TeamInvite.find({
+        status: 'pending',
+        expiresAt: { $gt: new Date() },
+        $or: [
+            { userId },
+            ...(userEmail ? [{ email: userEmail.toLowerCase() }] : [])
+        ]
+    })
+        .populate('teamId', 'name')
+        .populate('createdBy', 'username email')
+        .sort({ createdAt: -1 });
+
+    const [joinRequests, teamInvites] = await Promise.all([
+        joinRequestsPromise,
+        teamInvitesPromise
+    ]);
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                { joinRequests, teamInvites },
+                'Notifications fetched successfully'
+            )
+        );
+});
+
 
 
 
@@ -220,5 +272,6 @@ export {
     updateUser,
     deleteUser,
     getCurrentUser,
-    refreshAuthToken
+    refreshAuthToken,
+    getUserNotifications
 }

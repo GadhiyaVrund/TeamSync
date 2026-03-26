@@ -224,6 +224,7 @@ const addMember = asyncHandler(async (req, res) => {
 });
 
 // Remove member from team
+
 const removeMember = asyncHandler(async (req, res) => {
   const { teamId, memberId } = req.params;
   const userId = req.user._id;
@@ -325,7 +326,7 @@ const updateMemberRole = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, updatedTeam, 'Member role updated successfully'));
 });
-
+//status change kari devanu chhe k member task complete kayra pela leave na kari sake
 // Leave team
 const leaveTeam = asyncHandler(async (req, res) => {
   const { teamId } = req.params;
