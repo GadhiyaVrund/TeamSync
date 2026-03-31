@@ -1,9 +1,10 @@
 ﻿import { useState, useRef, useEffect, useCallback } from "react";
-import { Plus } from "lucide-react";
+import { Plus, UserPlus } from "lucide-react";
 import KanbanColumn from "./KanbanColumn";
 import { KanbanBoardSkeleton } from "./DashboardSkeletons";
 import MyTasksByTeam from "./MyTasksByTeam";
 import { moveTodo } from "../../apis/todo.api";
+import InviteUserModal from "./InviteUserModal";
 
 const COLUMN_CONFIG = {
   todo:       { id: "todo",       title: "To Do",      color: "bg-slate-400"    },
@@ -40,16 +41,19 @@ function buildColumns(tasks = []) {
   return cols;
 }
 
-export default function KanbanBoard({ activeTab, selectedTeam, onNewTask, loading = false }) {
+export default function KanbanBoard({ activeTab, selectedTeam, currentUser, onNewTask, loading = false }) {
   const [columns, setColumns] = useState(() => buildColumns(selectedTeam?.tasks));
   const [movingTaskId, setMovingTaskId] = useState(null);
   const [toastMessage, setToastMessage] = useState("");
+  const [toastTone, setToastTone] = useState("error");
+  const [inviteOpen, setInviteOpen] = useState(false);
   const dragTaskId = useRef(null);
   const dragSourceColumnId = useRef(null);
   const toastTimerRef = useRef(null);
 
-  const showToast = useCallback((message) => {
+  const showToast = useCallback((message, tone = "error") => {
     if (!message) return;
+    setToastTone(tone);
     setToastMessage(message);
 
     if (toastTimerRef.current) {
@@ -127,6 +131,20 @@ export default function KanbanBoard({ activeTab, selectedTeam, onNewTask, loadin
   const completedTasks = columns.completed?.tasks.length ?? 0;
   const progress = totalTasks ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
+  const currentUserRole = selectedTeam?.members?.find(
+    (member) => member.user?._id?.toString?.() === currentUser?._id?.toString?.()
+  )?.role;
+
+  const canInvite = selectedTeam && currentUserRole === "admin";
+
+  const handleInviteSuccess = (user) => {
+    if (user?.username) {
+      showToast(`Request sent to ${user.username}.`, "success");
+    } else {
+      showToast("Request sent.", "success");
+    }
+  };
+
   if (activeTab === "my-tasks") {
     return <MyTasksByTeam />;
   }
@@ -138,8 +156,14 @@ export default function KanbanBoard({ activeTab, selectedTeam, onNewTask, loadin
   return (
     <div className="flex flex-col h-full">
       {toastMessage && (
-        <div className="fixed top-5 right-5 z-50 max-w-sm rounded-lg border border-red-200 bg-white px-4 py-3 shadow-lg">
-          <p className="text-sm font-medium text-red-600">{toastMessage}</p>
+        <div className={`fixed top-5 right-5 z-50 max-w-sm rounded-lg border px-4 py-3 shadow-lg ${
+          toastTone === "success"
+            ? "border-emerald-200 bg-white"
+            : "border-red-200 bg-white"
+        }`}>
+          <p className={`text-sm font-medium ${toastTone === "success" ? "text-emerald-600" : "text-red-600"}`}>
+            {toastMessage}
+          </p>
         </div>
       )}
 
@@ -147,9 +171,16 @@ export default function KanbanBoard({ activeTab, selectedTeam, onNewTask, loadin
       <div className="flex items-center justify-between mb-5 px-1 shrink-0">
         {/* Left: name + subtitle */}
         <div className="min-w-0">
-          <h1 className="text-lg font-bold text-gray-900 truncate">
-            {selectedTeam ? selectedTeam.name : "Select a team"}
-          </h1>
+          <div className="flex items-center gap-2 min-w-0">
+            <h1 className="text-lg font-bold text-gray-900 truncate">
+              {selectedTeam ? selectedTeam.name : "Select a team"}
+            </h1>
+            {selectedTeam && currentUserRole && (
+              <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-gray-600 shrink-0">
+                {currentUserRole}
+              </span>
+            )}
+          </div>
           <p className="text-xs text-gray-400 mt-0.5">
             {totalTasks === 0
               ? "No tasks yet"
@@ -173,6 +204,16 @@ export default function KanbanBoard({ activeTab, selectedTeam, onNewTask, loadin
           )}
 
           {/* New Task */}
+          {canInvite && (
+            <button
+              onClick={() => setInviteOpen(true)}
+              className="flex items-center gap-1.5 border border-gray-200 text-gray-700 px-3.5 py-1.5 rounded-lg text-sm font-semibold hover:bg-gray-50 active:scale-95 transition-all"
+            >
+              <UserPlus className="h-4 w-4" />
+              <span>Invite User</span>
+            </button>
+          )}
+
           {selectedTeam && (
             <button
               onClick={onNewTask}
@@ -208,6 +249,15 @@ export default function KanbanBoard({ activeTab, selectedTeam, onNewTask, loadin
             <p className="text-xs text-gray-400 mt-0.5">Pick a team from the sidebar or create one.</p>
           </div>
         </div>
+      )}
+
+      {inviteOpen && selectedTeam && (
+        <InviteUserModal
+          isOpen={inviteOpen}
+          onClose={() => setInviteOpen(false)}
+          team={selectedTeam}
+          onSuccess={handleInviteSuccess}
+        />
       )}
     </div>
   );

@@ -138,6 +138,7 @@ export default function DashboardPage() {
           <KanbanBoard
             activeTab={activeTab}
             selectedTeam={selectedTeam}
+            currentUser={currentUser}
             onNewTask={() => setNewTaskOpen(true)}
             loading={teamLoading}
           />

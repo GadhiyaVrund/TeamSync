@@ -218,21 +218,14 @@ const getUserNotifications = asyncHandler(async (req, res) => {
     const userId = req.user._id;
     const userEmail = req.user.email;
 
-    const adminTeams = await Team.find({
-        members: { $elemMatch: { user: userId, role: 'admin' } }
-    }).select('_id name');
-
-    const adminTeamIds = adminTeams.map((team) => team._id);
-
-    const joinRequestsPromise = adminTeamIds.length
-        ? JoinRequest.find({
-            teamId: { $in: adminTeamIds },
-            status: 'pending'
-        })
-            .populate('teamId', 'name')
-            .populate('userId', 'username email')
-            .sort({ createdAt: -1 })
-        : Promise.resolve([]);
+    const joinRequestsPromise = JoinRequest.find({
+        userId,
+        status: 'pending',
+        createdBy: { $ne: userId }
+    })
+        .populate('teamId', 'name')
+        .populate('createdBy', 'username email')
+        .sort({ createdAt: -1 });
 
     const teamInvitesPromise = TeamInvite.find({
         status: 'pending',
@@ -251,15 +244,37 @@ const getUserNotifications = asyncHandler(async (req, res) => {
         teamInvitesPromise
     ]);
 
+    console.log(`Fetched ${joinRequests.length} join requests and ${teamInvites.length} team invites for user ${userId}`);
     return res
         .status(200)
         .json(
             new ApiResponse(
                 200,
-                { joinRequests, teamInvites },
+                { requests: joinRequests, invites: teamInvites },
                 'Notifications fetched successfully'
             )
         );
+});
+
+const searchUsers = asyncHandler(async (req, res) => {
+    const query = String(req.query.q || '').trim();
+    if (!query) {
+        return res
+            .status(200)
+            .json(new ApiResponse(200, [], 'Users fetched successfully'));
+    }
+
+    const users = await User.find({
+        _id: { $ne: req.user._id },
+        username: { $regex: query, $options: 'i' }
+    })
+        .select('_id username')
+        .limit(10)
+        .lean();
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, users, 'Users fetched successfully'));
 });
 
 
@@ -273,5 +288,6 @@ export {
     deleteUser,
     getCurrentUser,
     refreshAuthToken,
-    getUserNotifications
+    getUserNotifications,
+    searchUsers
 }

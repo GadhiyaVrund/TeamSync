@@ -3,7 +3,7 @@ import {
   getNotifications,
   acceptInvite,
   rejectInvite,
-  approveRequest,
+  acceptRequest,
   rejectRequest,
 } from "../../apis/notifications.api";
 import { Button } from "../ui/button";
@@ -29,8 +29,16 @@ export default function NotificationPanel({
     try {
       const res = await getNotifications();
       const data = res?.data?.data || {};
-      const invites = Array.isArray(data.invites) ? data.invites : [];
-      const requests = Array.isArray(data.requests) ? data.requests : [];
+      const invites = Array.isArray(data.invites)
+        ? data.invites
+        : Array.isArray(data.teamInvites)
+          ? data.teamInvites
+          : [];
+      const requests = Array.isArray(data.requests)
+        ? data.requests
+        : Array.isArray(data.joinRequests)
+          ? data.joinRequests
+          : [];
       if (isMountedRef.current) {
         setNotifications({ invites, requests });
       }
@@ -47,6 +55,7 @@ export default function NotificationPanel({
   }, []);
 
   useEffect(() => {
+    isMountedRef.current = true;
     fetchNotifications();
     const intervalId = setInterval(fetchNotifications, POLL_INTERVAL_MS);
 
@@ -54,13 +63,13 @@ export default function NotificationPanel({
       isMountedRef.current = false;
       clearInterval(intervalId);
     };
-  }, [fetchNotifications]);
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
       fetchNotifications();
     }
-  }, [isOpen, fetchNotifications]);
+  }, [isOpen]);
 
   const totalCount = useMemo(
     () => notifications.invites.length + notifications.requests.length,
@@ -94,7 +103,7 @@ export default function NotificationPanel({
   const handleRequestAction = async (requestId, action) => {
     try {
       if (action === "accept") {
-        await approveRequest(requestId);
+        await acceptRequest(requestId);
       } else {
         await rejectRequest(requestId);
       }
@@ -201,9 +210,8 @@ export default function NotificationPanel({
               const teamName =
                 request.teamId?.name || request.team?.name || "Team";
               const requesterName =
-                request.userId?.username ||
-                request.user?.username ||
-                request.userId?.email ||
+                request.createdBy?.username ||
+                request.createdBy?.email ||
                 "User";
 
               return (
@@ -212,10 +220,7 @@ export default function NotificationPanel({
                   className="rounded-lg border border-gray-100 p-3 bg-gray-50"
                 >
                   <p className="text-sm font-medium text-gray-900">
-                    {teamName} join request
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Requested by {requesterName}
+                    {requesterName} requested to join {teamName}
                   </p>
                   <div className="mt-3 flex gap-2">
                     <Button

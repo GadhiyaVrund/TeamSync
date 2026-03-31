@@ -12,6 +12,11 @@ const joinRequestSchema = new mongoose.Schema(
       ref: 'User',
       required: [true, 'User reference is required']
     },
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: [true, 'Creator reference is required']
+    },
     status: {
       type: String,
       enum: ['pending', 'approved', 'rejected'],

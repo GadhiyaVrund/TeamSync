@@ -2,6 +2,7 @@ import express from 'express';
 import { verifyJwt } from '../middleware/auth.middleware.js';
 import {
   requestToJoinTeam,
+  acceptJoinRequest,
   approveJoinRequest,
   rejectJoinRequest
 } from '../controllers/joinRequest.controller.js';
@@ -17,6 +18,9 @@ router.route('/teams/:teamId')
 // Admin actions
 router.route('/:requestId/approve')
   .post(approveJoinRequest);
+
+router.route('/:requestId/accept')
+  .post(acceptJoinRequest);
 
 router.route('/:requestId/reject')
   .post(rejectJoinRequest);

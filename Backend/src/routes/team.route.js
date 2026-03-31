@@ -11,6 +11,7 @@ import {
   updateMemberRole,
   leaveTeam
 } from '../controllers/team.controller.js';
+import { requestUserToJoinTeam } from '../controllers/joinRequest.controller.js';
 
 const router = express.Router();
 
@@ -37,6 +38,9 @@ router.route('/:teamId/members/:memberId')
 
 router.route('/:teamId/leave')
   .post(leaveTeam);           // Leave team
+
+router.route('/:teamId/request-user')
+  .post(requestUserToJoinTeam);
 
 
 

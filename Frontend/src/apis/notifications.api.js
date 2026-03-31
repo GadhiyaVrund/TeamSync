@@ -9,8 +9,8 @@ export const acceptInvite = (inviteId) =>
 export const rejectInvite = (inviteId) =>
   axiosInstance.post(`/api/v1/invites/${inviteId}/reject`);
 
-export const approveRequest = (requestId) =>
-  axiosInstance.post(`/api/v1/requests/${requestId}/approve`);
+export const acceptRequest = (requestId) =>
+  axiosInstance.post(`/api/v1/requests/${requestId}/accept`);
 
 export const rejectRequest = (requestId) =>
   axiosInstance.post(`/api/v1/requests/${requestId}/reject`);

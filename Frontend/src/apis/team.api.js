@@ -26,3 +26,6 @@ export const updateMemberRole = (teamId, memberId, data) =>
 
 export const leaveTeam = (teamId) =>
   axiosInstance.post(`/api/v1/teams/${teamId}/leave`);
+
+export const requestUserToJoinTeam = (teamId, data) =>
+  axiosInstance.post(`/api/v1/teams/${teamId}/request-user`, data);

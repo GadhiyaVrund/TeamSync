@@ -23,6 +23,8 @@ app.use('/api/v1/teams', teamRoutes);
 app.use('/api/v1/todos', todoRoutes);
 app.use('/api/v1/team-invites', teamInviteRoutes);
 app.use('/api/v1/join-requests', joinRequestRoutes);
+app.use('/api/v1/invites', teamInviteRoutes);
+app.use('/api/v1/requests', joinRequestRoutes);
 
 // Global JSON error handler — must be after all routes
 app.use((err, req, res, next) => {

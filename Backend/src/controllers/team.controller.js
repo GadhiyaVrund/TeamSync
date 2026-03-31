@@ -326,6 +326,7 @@ const updateMemberRole = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, updatedTeam, 'Member role updated successfully'));
 });
+
 //status change kari devanu chhe k member task complete kayra pela leave na kari sake
 // Leave team
 const leaveTeam = asyncHandler(async (req, res) => {
