@@ -17,6 +17,8 @@ const createTodo = asyncHandler(async (req, res) => {
         throw new ApiError(400, 'Todo name is required');
     }
 
+    
+
     if (!team) {
         throw new ApiError(400, 'Team is required');
     }

@@ -244,7 +244,7 @@ const getUserNotifications = asyncHandler(async (req, res) => {
         teamInvitesPromise
     ]);
 
-    console.log(`Fetched ${joinRequests.length} join requests and ${teamInvites.length} team invites for user ${userId}`);
+    
     return res
         .status(200)
         .json(

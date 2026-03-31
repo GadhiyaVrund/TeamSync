@@ -17,6 +17,10 @@ const validateTaskMove = ({ role, fromStatus, toStatus }) => {
         return;
     }
 
+    if(fromStatus === "in-review" && (role !== ROLE_ADMIN && role !== ROLE_MANAGER) ) {
+        throw new ApiError(403, 'Only admins and managers can move tasks to in-review status');
+    }
+
     if (fromStatus === 'completed' && role == ROLE_ADMIN) {
         return;
     }
@@ -34,7 +38,6 @@ const validateTaskMove = ({ role, fromStatus, toStatus }) => {
 };
 
 const completeTask = async(taskid, userId) => { 
-
 
     if(!(taskid && userId)) {  
         throw new ApiError(400, 'Task ID and User ID are required');

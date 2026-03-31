@@ -136,6 +136,7 @@ export default function KanbanBoard({ activeTab, selectedTeam, currentUser, onNe
   )?.role;
 
   const canInvite = selectedTeam && currentUserRole === "admin";
+  const canCreateTask = selectedTeam && ["admin", "manager"].includes(currentUserRole);
 
   const handleInviteSuccess = (user) => {
     if (user?.username) {
@@ -216,8 +217,16 @@ export default function KanbanBoard({ activeTab, selectedTeam, currentUser, onNe
 
           {selectedTeam && (
             <button
-              onClick={onNewTask}
-              className="flex items-center gap-1.5 bg-primary text-white px-3.5 py-1.5 rounded-lg text-sm font-semibold hover:bg-primary/90 active:scale-95 transition-all shadow-sm"
+              onClick={() => {
+                if (canCreateTask) onNewTask();
+              }}
+              disabled={!canCreateTask}
+              title={!canCreateTask ? "Only admin or manager can create tasks" : "Create a new task"}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-sm font-semibold transition-all shadow-sm ${
+                canCreateTask
+                  ? "bg-primary text-white hover:bg-primary/90 active:scale-95"
+                  : "bg-gray-200 text-gray-500 cursor-not-allowed"
+              }`}
             >
               <Plus className="h-4 w-4" />
               <span>New Task</span>
