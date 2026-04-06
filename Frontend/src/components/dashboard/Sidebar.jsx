@@ -181,7 +181,7 @@ export default function Sidebar({
         )}
 
        
-      </div>
+      </div>  
 
       {/* User footer */}
       <div className="border-t border-gray-200 p-2 shrink-0">
