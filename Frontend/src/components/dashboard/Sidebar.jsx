@@ -6,7 +6,6 @@ import {
   Home,
   CheckSquare,
   Zap,
-  CalendarDays,
   Users,
   ChevronDown,
   ChevronRight,
@@ -50,7 +49,7 @@ function NavItem({ icon: Icon, label, active, onClick, indent = false }) {
 }
 
 export default function Sidebar({
-  activeNav, setActiveNav, collapsed, setCollapsed,
+  activeNav, onSelectNav, collapsed, setCollapsed,
   teams = [], selectedTeamId, onSelectTeam, onCreateTeam, currentUser, teamsLoading = false,
 }) {
   const [teamspacesOpen, setTeamspacesOpen] = useState(true);
@@ -112,7 +111,7 @@ export default function Sidebar({
             return (
               <button
                 key={item.id}
-                onClick={() => setActiveNav(item.id)}
+                onClick={() => onSelectNav(item.id)}
                 title={item.label}
                 className={`w-full flex items-center justify-center p-2 rounded-md transition-colors ${
                   activeNav === item.id
@@ -130,7 +129,7 @@ export default function Sidebar({
               icon={Icon}
               label={item.label}
               active={activeNav === item.id}
-              onClick={() => setActiveNav(item.id)}
+              onClick={() => onSelectNav(item.id)}
             />
           );
         })}
@@ -169,7 +168,7 @@ export default function Sidebar({
                         key={team._id}
                         icon={Users}
                         label={team.name}
-                        active={selectedTeamId === team._id}
+                        active={activeNav === `team:${team._id}`}
                         onClick={() => onSelectTeam(team._id)}
                         indent
                       />

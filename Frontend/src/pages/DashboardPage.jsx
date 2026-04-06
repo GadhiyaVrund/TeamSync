@@ -9,7 +9,7 @@ import { getCurrentUser } from "../apis/auth.api";
 
 export default function DashboardPage() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [activeNav, setActiveNav] = useState("sprint");
+  const [activeNav, setActiveNav] = useState("home");
   const [activeTab, setActiveTab] = useState("company");
   const [newTaskOpen, setNewTaskOpen] = useState(false);
   const [createTeamOpen, setCreateTeamOpen] = useState(false);
@@ -20,6 +20,40 @@ export default function DashboardPage() {
   const [currentUser, setCurrentUser] = useState(null);
   const [teamsLoading, setTeamsLoading] = useState(true);
   const [teamLoading, setTeamLoading] = useState(true);
+
+  const handleSelectNav = (navId) => {
+    setActiveNav(navId);
+
+    if (navId === "home") {
+      setActiveTab("company");
+      return;
+    }
+
+    if (navId === "my-tasks") {
+      setActiveTab("my-tasks");
+      return;
+    }
+
+    if (navId === "sprint") {
+      setActiveTab("sprint");
+    }
+  };
+
+  const handleHeaderTabChange = (tabId) => {
+    setActiveTab(tabId);
+
+    if (tabId === "my-tasks") {
+      setActiveNav("my-tasks");
+      return;
+    }
+
+    if (tabId === "sprint") {
+      setActiveNav("sprint");
+      return;
+    }
+
+    setActiveNav("home");
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -72,7 +106,14 @@ export default function DashboardPage() {
   }, []);
 
   const handleSelectTeam = async (teamId) => {
-    if (!teamId || teamId === selectedTeamId) {
+    if (!teamId) {
+      return;
+    }
+
+    setActiveNav(`team:${teamId}`);
+    setActiveTab("company");
+
+    if (teamId === selectedTeamId) {
       return;
     }
 
@@ -95,6 +136,8 @@ export default function DashboardPage() {
     const res = await createTeamAPI(teamData);
     const newTeam = res.data.data;
     setTeams((prev) => [newTeam, ...prev]);
+    setActiveNav(`team:${newTeam._id}`);
+    setActiveTab("company");
     setSelectedTeamId(newTeam._id);
     setTeamLoading(true);
 
@@ -116,7 +159,7 @@ export default function DashboardPage() {
     <div className="flex h-screen bg-gray-50 overflow-hidden font-sans">
       <Sidebar
         activeNav={activeNav}
-        setActiveNav={setActiveNav}
+        onSelectNav={handleSelectNav}
         collapsed={sidebarCollapsed}
         setCollapsed={setSidebarCollapsed}
         teams={teams}
@@ -130,7 +173,7 @@ export default function DashboardPage() {
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         <Header
           activeTab={activeTab}
-          setActiveTab={setActiveTab}
+          setActiveTab={handleHeaderTabChange}
           currentUser={currentUser}
         />
 
