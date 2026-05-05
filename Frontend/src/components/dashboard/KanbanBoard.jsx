@@ -38,6 +38,44 @@ function buildColumns(tasks = []) {
     const colId = STATUS_TO_COLUMN[task.status] ?? "todo";
     cols[colId].tasks.push(task);
   }
+  
+  // Sort tasks within each column by due date (overdue/due soon first, then by priority)
+  Object.keys(cols).forEach((colId) => {
+    cols[colId].tasks.sort((a, b) => {
+      // First, sort by overdue/due soon status
+      const getUrgency = (task) => {
+        if (!task.dueDate) return 2; // No due date - lowest priority
+        const due = new Date(task.dueDate);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        due.setHours(0, 0, 0, 0);
+        const daysUntil = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
+        if (daysUntil < 0) return 0; // Overdue - highest priority
+        if (daysUntil <= 3) return 1; // Due soon
+        return 2; // Upcoming
+      };
+      
+      const urgencyA = getUrgency(a);
+      const urgencyB = getUrgency(b);
+      
+      if (urgencyA !== urgencyB) return urgencyA - urgencyB;
+      
+      // If same urgency, sort by priority (high > medium > low)
+      const priorityOrder = { high: 0, medium: 1, low: 2 };
+      const priorA = priorityOrder[a.priority] ?? 1;
+      const priorB = priorityOrder[b.priority] ?? 1;
+      
+      if (priorA !== priorB) return priorA - priorB;
+      
+      // Finally, sort by due date ascending
+      if (a.dueDate && b.dueDate) {
+        return new Date(a.dueDate) - new Date(b.dueDate);
+      }
+      
+      return 0;
+    });
+  });
+  
   return cols;
 }
 
@@ -99,6 +137,9 @@ export default function KanbanBoard({ activeTab, selectedTeam, currentUser, onNe
     // Snapshot for revert
     const snapshot = columns;
 
+    // Get the new status for the target column
+    const newStatus = COLUMN_TO_STATUS[targetColumnId];
+
     // Optimistic update
     setColumns((prev) => {
       const sourceCol = { ...prev[sourceColumnId], tasks: [...prev[sourceColumnId].tasks] };
@@ -106,12 +147,13 @@ export default function KanbanBoard({ activeTab, selectedTeam, currentUser, onNe
       const taskIndex = sourceCol.tasks.findIndex((t) => t._id === taskId);
       if (taskIndex === -1) return prev;
       const [movedTask] = sourceCol.tasks.splice(taskIndex, 1);
+      // Update task status to match new column
+      movedTask.status = newStatus;
       targetCol.tasks.push(movedTask);
       return { ...prev, [sourceColumnId]: sourceCol, [targetColumnId]: targetCol };
     });
 
     // Persist to backend
-    const newStatus = COLUMN_TO_STATUS[targetColumnId];
     if (newStatus) {
       setMovingTaskId(taskId);
       try {
@@ -134,6 +176,17 @@ export default function KanbanBoard({ activeTab, selectedTeam, currentUser, onNe
   const currentUserRole = selectedTeam?.members?.find(
     (member) => member.user?._id?.toString?.() === currentUser?._id?.toString?.()
   )?.role;
+
+  const canMoveTask = useCallback((task) => {
+    if (!currentUser?._id) {
+      return false;
+    }
+
+    const isAssignedUser = task?.assignedTo?._id?.toString?.() === currentUser._id.toString();
+    const canMoveAsLeader = ["admin", "manager"].includes(currentUserRole);
+
+    return isAssignedUser || canMoveAsLeader;
+  }, [currentUser?._id, currentUserRole]);
 
   const canInvite = selectedTeam && currentUserRole === "admin";
   const canCreateTask = selectedTeam && ["admin", "manager"].includes(currentUserRole);
@@ -243,6 +296,7 @@ export default function KanbanBoard({ activeTab, selectedTeam, currentUser, onNe
               key={colId}
               column={columns[colId]}
               movingTaskId={movingTaskId}
+              canMoveTask={canMoveTask}
               onDragStart={handleDragStart}
               onDrop={handleDrop}
             />

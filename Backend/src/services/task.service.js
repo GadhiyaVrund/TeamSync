@@ -12,6 +12,17 @@ const getStatusIndex = (status) => VALID_STATUSES.indexOf(status);
 const findTeamMember = (team, userId) =>
     team.members.find((member) => member.user.toString() === userId.toString());
 
+const canMemberMoveTask = (member, task) => {
+    if (!member) {
+        return false;
+    }
+
+    const isAssignedUser = task.assignedTo && task.assignedTo.toString() === member.user.toString();
+    const canMoveAsLeader = member.role === ROLE_ADMIN || member.role === ROLE_MANAGER;
+
+    return isAssignedUser || canMoveAsLeader;
+};
+
 const validateTaskMove = ({ role, fromStatus, toStatus }) => {
     if (fromStatus === toStatus) {
         return;
@@ -193,6 +204,10 @@ const moveTask = async (taskId, userId, nextStatus) => {
         throw new ApiError(403, 'You are not a member of this team');
     }
 
+    if (!canMemberMoveTask(member, task)) {
+        throw new ApiError(403, 'Only the assigned task member or team admin/manager can move this task');
+    }
+    
     validateTaskMove({
         role: member.role,
         fromStatus: task.status,

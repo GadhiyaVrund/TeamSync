@@ -23,10 +23,20 @@ const todoSchema = new mongoose.Schema(
       ref: 'User',
       default: null
     },
+    dueDate: {
+      type: Date,
+      default: null
+    },
     status: {
       type: String,
       enum: ['to-do', 'in-progress', 'in-review', 'completed'],
       default: 'to-do'
+    },
+    priority: {
+      type: String,
+      enum: ['low', 'medium', 'high'],
+      default: 'medium',
+      required: [true, 'Priority is required']
     },
   },
   {
@@ -37,7 +47,7 @@ const todoSchema = new mongoose.Schema(
 // Index for faster queries
 todoSchema.index({ team: 1, status: 1 });
 todoSchema.index({ assignedTo: 1 });
-
+todoSchema.index({ dueDate: 1 });
 
 
 export const Todo = mongoose.model('Todo', todoSchema);

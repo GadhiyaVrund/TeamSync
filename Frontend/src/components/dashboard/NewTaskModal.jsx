@@ -8,8 +8,21 @@ const STATUS_OPTIONS = [
   { value: "completed",   label: "Completed"   },
 ];
 
+const PRIORITY_OPTIONS = [
+  { value: "low",    label: "Low" },
+  { value: "medium", label: "Medium" },
+  { value: "high",   label: "High" },
+];
+
 export default function NewTaskModal({ onClose, selectedTeam, onTaskCreated }) {
-  const [form, setForm] = useState({ name: "", description: "", assignee: "", status: "to-do" });
+  const [form, setForm] = useState({ 
+    name: "", 
+    description: "", 
+    assignee: "", 
+    status: "to-do",
+    priority: "medium",
+    dueDate: ""
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -26,15 +39,32 @@ export default function NewTaskModal({ onClose, selectedTeam, onTaskCreated }) {
 
   const members = selectedTeam?.members || [];
 
+  // Check if current user is admin or manager
+  const userRole = selectedTeam?.members?.find(m => m.role === 'admin' || m.role === 'manager')?.role;
+  const canSetDueDate = userRole === 'admin' || userRole === 'manager';
+
+  // Get minimum date (today)
+  const getMinDate = () => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!selectedTeam) return;
     setLoading(true);
     setError("");
     try {
-      const payload = { name: form.name.trim(), team: selectedTeam._id, status: form.status };
+      const payload = { 
+        name: form.name.trim(), 
+        team: selectedTeam._id, 
+        status: form.status,
+        priority: form.priority
+      };
       if (form.description.trim()) payload.description = form.description.trim();
       if (form.assignee) payload.assignedTo = form.assignee;
+      if (form.dueDate && canSetDueDate) payload.dueDate = form.dueDate;
+      
       const res = await createTodo(payload);
       onTaskCreated(res.data.data);
       onClose();
@@ -108,6 +138,21 @@ export default function NewTaskModal({ onClose, selectedTeam, onTaskCreated }) {
             </div>
 
             <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1.5">Priority</label>
+              <select
+                value={form.priority}
+                onChange={(e) => setForm({ ...form, priority: e.target.value })}
+                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary bg-white text-gray-700"
+              >
+                {PRIORITY_OPTIONS.map((p) => (
+                  <option key={p.value} value={p.value}>{p.label}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
               <label className="block text-xs font-medium text-gray-600 mb-1.5">Status</label>
               <select
                 value={form.status}
@@ -119,6 +164,19 @@ export default function NewTaskModal({ onClose, selectedTeam, onTaskCreated }) {
                 ))}
               </select>
             </div>
+
+            {canSetDueDate && (
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1.5">Due Date</label>
+                <input
+                  type="date"
+                  value={form.dueDate}
+                  onChange={(e) => setForm({ ...form, dueDate: e.target.value })}
+                  min={getMinDate()}
+                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary bg-white text-gray-700"
+                />
+              </div>
+            )}
           </div>
 
           {error && (

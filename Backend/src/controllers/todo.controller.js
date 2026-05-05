@@ -6,7 +6,7 @@ import { completeTask, moveTask } from "../services/task.service.js";
 import { Team } from "../models/team.model.js";
 
 const createTodo = asyncHandler(async (req, res) => {
-    const { name, description, team, assignedTo, status } = req.body;
+    const { name, description, team, assignedTo, status, dueDate, priority } = req.body;
     const userId = req.user._id;
 
 
@@ -39,6 +39,12 @@ const createTodo = asyncHandler(async (req, res) => {
         throw new ApiError(400, `Status must be one of: ${validStatuses.join(', ')}`);
     }
 
+    // Validate priority if provided
+    const validPriorities = ['low', 'medium', 'high'];
+    if (priority && !validPriorities.includes(priority)) {
+        throw new ApiError(400, `Priority must be one of: ${validPriorities.join(', ')}`);
+    }
+
     // Check if team exists
     const teamExists = await Team.findById(team).select('members tasks');
 
@@ -47,12 +53,27 @@ const createTodo = asyncHandler(async (req, res) => {
     }
     
     // Check if user is a member of the team
-    const isMember = teamExists.members.some(
+    const userMember = teamExists.members.find(
         (member) => member.user.toString() === userId.toString()
     );
     
-    if (!isMember) {
+    if (!userMember) {
         throw new ApiError(403, 'You must be a member of the team to create tasks');
+    }
+
+    // Only admin or manager can set due date
+    if (dueDate && !['admin', 'manager'].includes(userMember.role)) {
+        throw new ApiError(403, 'Only admin or manager can set due dates');
+    }
+
+    // Validate due date is not in the past
+    if (dueDate) {
+        const dueDateObj = new Date(dueDate);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        if (dueDateObj < today) {
+            throw new ApiError(400, 'Due date cannot be in the past');
+        }
     }
 
     // If assignedTo is provided, verify they are a team member
@@ -72,7 +93,10 @@ const createTodo = asyncHandler(async (req, res) => {
         description: trimmedDescription || undefined,
         team,
         assignedTo: assignedTo || null,
-        status: status || 'in-progress'
+        status: status || 'to-do',
+        dueDate: dueDate || null,
+        priority: priority || 'medium'
+
     });
 
     
@@ -83,7 +107,7 @@ const createTodo = asyncHandler(async (req, res) => {
     // Fetch the created todo with populated fields
     const createdTodo = await Todo.findById(todo._id)
         .populate('assignedTo', 'username')
-        .select('_id name description status assignedTo createdAt');
+        .select('_id name description status priority assignedTo createdAt dueDate');
 
     return res
         .status(201)
@@ -108,7 +132,8 @@ const getAllTodos = asyncHandler(async (req, res) => {
     const userid = req.user._id;
     const todos = await Todo.find({ assignedTo: userid })
         .populate('team', 'name description')
-        .populate('assignedTo', 'username email fullName');
+        .populate('assignedTo', 'username email fullName')
+        .sort({ dueDate: 1 }); // Sort by due date ascending
     
 
     return res
@@ -127,7 +152,7 @@ const completeTodo = asyncHandler(async (req, res) => {
 });
 
 const updateTodo = asyncHandler(async (req, res) => {
-    const { name, description, status } = req.body;
+    const { name, description, status, dueDate, priority } = req.body;
     const uid = req.user._id;
     const todo = await Todo.findById(req.params.id);
 
@@ -139,17 +164,46 @@ const updateTodo = asyncHandler(async (req, res) => {
     if (!team) {
         throw new ApiError(404, 'Team not found');
     }
-    const isMember = team.members.some(
+    
+    const userMember = team.members.find(
         (member) => member.user.toString() === uid.toString()
     );
 
-    if (!isMember) {
-        throw new ApiError(403, 'You are not a member of this team');
+    if (!userMember || !['admin', 'manager'].includes(userMember.role)) {
+        throw new ApiError(403, 'Only admin or manager can update tasks');
+    }
+
+    // Validate priority if provided
+    const validPriorities = ['low', 'medium', 'high'];
+    if (priority && !validPriorities.includes(priority)) {
+        throw new ApiError(400, `Priority must be one of: ${validPriorities.join(', ')}`);
+    }
+
+    // Validate status if provided
+    const validStatuses = ['to-do', 'in-progress', 'in-review', 'completed'];
+    if (status && !validStatuses.includes(status)) {
+        throw new ApiError(400, `Status must be one of: ${validStatuses.join(', ')}`);
+    }
+
+    // Validate due date is not in the past
+    if (dueDate) {
+        const dueDateObj = new Date(dueDate);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        if (dueDateObj < today) {
+            throw new ApiError(400, 'Due date cannot be in the past');
+        }
     }
 
     const updatedTodo = await Todo.findByIdAndUpdate(
         req.params.id,
-        { name, description, status },
+        { 
+            ...(name && { name }),
+            ...(description !== undefined && { description }),
+            ...(status && { status }),
+            ...(dueDate !== undefined && { dueDate }),
+            ...(priority && { priority })
+        },
         { new: true }
     )
     .populate('team', 'name description')
