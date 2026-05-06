@@ -214,6 +214,32 @@ const updateTodo = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, updatedTodo, 'Todo updated successfully'));
 });
 
+// priority (high to low) and then by due date (ascending)
+const getPriorityTodos = asyncHandler(async (req, res) => {
+
+    const userid = req.user._id;
+
+    if(!userid){
+        throw new ApiError(400, 'User ID is required');
+    }
+    
+    const todos = await Todo.find({ assignedTo: userid })
+        .populate('team', 'name description')
+        .populate('assignedTo', 'username email fullName')
+        .sort({ priority: -1, dueDate: 1 }); 
+
+    if(todos.length === 0){
+        return res
+        .status(200)
+        .json(new ApiResponse(200, [], 'No todos found for the user'));
+    }    
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, todos, 'High priority todos retrieved successfully'));
+
+});
+
 const moveTodo = asyncHandler(async (req, res) => {
     const { status } = req.body;
     const updatedTodo = await moveTask(req.params.id, req.user._id, status);
@@ -232,4 +258,5 @@ export {
     getAllTodos,
     updateTodo,
     moveTodo,
+    getPriorityTodos
 };

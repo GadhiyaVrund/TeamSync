@@ -4,6 +4,7 @@ import NotificationPanel from "./NotificationPanel";
 import { getInitials, getAvatarColor } from "../../utils/avatar";
 
 const HEADER_TABS = [
+  { id: "home",     label: "Dashboard"    },
   { id: "company",  label: "Team Tasks"   },
   { id: "my-tasks", label: "My Tasks"         },
   { id: "sprint",   label: "Current Sprint"   },

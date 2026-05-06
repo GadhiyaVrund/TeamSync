@@ -224,7 +224,6 @@ const addMember = asyncHandler(async (req, res) => {
 });
 
 // Remove member from team
-
 const removeMember = asyncHandler(async (req, res) => {
   const { teamId, memberId } = req.params;
   const userId = req.user._id;

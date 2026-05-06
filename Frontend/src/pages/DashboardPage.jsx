@@ -4,6 +4,7 @@ import Header from "../components/dashboard/Header";
 import KanbanBoard from "../components/dashboard/KanbanBoard";
 import NewTaskModal from "../components/dashboard/NewTaskModal";
 import CreateTeamModal from "../components/dashboard/CreateTeamModal";
+import DashboardHome from "../components/dashboard/home/DashboardHome";
 import { getUserTeams, getTeamById, createTeam as createTeamAPI } from "../apis/team.api";
 import { getCurrentUser } from "../apis/auth.api";
 
@@ -25,7 +26,7 @@ export default function DashboardPage() {
     setActiveNav(navId);
 
     if (navId === "home") {
-      setActiveTab("company");
+      setActiveTab("home");
       return;
     }
 
@@ -36,11 +37,19 @@ export default function DashboardPage() {
 
     if (navId === "sprint") {
       setActiveTab("sprint");
+      return;
     }
+
+    setActiveTab("company");
   };
 
   const handleHeaderTabChange = (tabId) => {
     setActiveTab(tabId);
+
+    if (tabId === "home") {
+      setActiveNav("home");
+      return;
+    }
 
     if (tabId === "my-tasks") {
       setActiveNav("my-tasks");
@@ -49,6 +58,11 @@ export default function DashboardPage() {
 
     if (tabId === "sprint") {
       setActiveNav("sprint");
+      return;
+    }
+
+    if (selectedTeamId) {
+      setActiveNav(`team:${selectedTeamId}`);
       return;
     }
 
@@ -178,13 +192,20 @@ export default function DashboardPage() {
         />
 
         <main className="flex-1 overflow-y-auto p-6">
-          <KanbanBoard
-            activeTab={activeTab}
-            selectedTeam={selectedTeam}
-            currentUser={currentUser}
-            onNewTask={() => setNewTaskOpen(true)}
-            loading={teamLoading}
-          />
+          {activeNav === "home" ? (
+            <DashboardHome
+              currentUser={currentUser}
+              activeTeams={teams.length}
+            />
+          ) : (
+            <KanbanBoard
+              activeTab={activeTab}
+              selectedTeam={selectedTeam}
+              currentUser={currentUser}
+              onNewTask={() => setNewTaskOpen(true)}
+              loading={teamLoading}
+            />
+          )}
         </main>
       </div>
 

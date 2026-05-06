@@ -6,6 +6,9 @@ export const createTodo = (data) =>
 export const getAssignedTodos = () =>
   axiosInstance.get("/api/v1/todos");
 
+export const getPriorityTodos = () =>
+  axiosInstance.get("/api/v1/todos/priority");
+
 export const updateTodo = (id, data) =>
   axiosInstance.put(`/api/v1/todos/${id}`, data);
 
