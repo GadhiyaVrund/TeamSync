@@ -199,6 +199,57 @@ export default function KanbanBoard({ activeTab, selectedTeam, currentUser, onNe
     }
   };
 
+  const handleTaskUpdated = (updatedTask) => {
+    // Refresh the task in columns
+    setColumns((prev) => {
+      const newColumns = JSON.parse(JSON.stringify(prev));
+      const newStatus = STATUS_TO_COLUMN[updatedTask.status] ?? "todo";
+      
+      // Remove task from old columns
+      Object.keys(newColumns).forEach((colId) => {
+        newColumns[colId].tasks = newColumns[colId].tasks.filter(
+          (t) => t._id !== updatedTask._id
+        );
+      });
+
+      // Add updated task to correct column
+      newColumns[newStatus].tasks.unshift(updatedTask);
+      
+      // Re-sort the column
+      newColumns[newStatus].tasks.sort((a, b) => {
+        const getUrgency = (task) => {
+          if (!task.dueDate) return 2;
+          const due = new Date(task.dueDate);
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          due.setHours(0, 0, 0, 0);
+          const daysUntil = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
+          if (daysUntil < 0) return 0;
+          if (daysUntil <= 3) return 1;
+          return 2;
+        };
+        
+        const urgencyA = getUrgency(a);
+        const urgencyB = getUrgency(b);
+        if (urgencyA !== urgencyB) return urgencyA - urgencyB;
+        
+        const priorityOrder = { high: 0, medium: 1, low: 2 };
+        const priorA = priorityOrder[a.priority] ?? 1;
+        const priorB = priorityOrder[b.priority] ?? 1;
+        if (priorA !== priorB) return priorA - priorB;
+        
+        if (a.dueDate && b.dueDate) {
+          return new Date(a.dueDate) - new Date(b.dueDate);
+        }
+        return 0;
+      });
+
+      return newColumns;
+    });
+
+    showToast("Task updated successfully", "success");
+  };
+
   if (activeTab === "my-tasks") {
     return <MyTasksByTeam />;
   }
@@ -299,6 +350,9 @@ export default function KanbanBoard({ activeTab, selectedTeam, currentUser, onNe
               canMoveTask={canMoveTask}
               onDragStart={handleDragStart}
               onDrop={handleDrop}
+              team={selectedTeam}
+              currentUser={currentUser}
+              onTaskUpdated={handleTaskUpdated}
             />
           ))}
         </div>
@@ -306,7 +360,7 @@ export default function KanbanBoard({ activeTab, selectedTeam, currentUser, onNe
         <div className="flex-1 flex flex-col items-center justify-center gap-3 text-center">
           <div className="h-14 w-14 rounded-2xl bg-gray-100 flex items-center justify-center">
             <Plus className="h-6 w-6 text-gray-300" />
-          </div>
+          </div> 
           <div>
             <p className="text-sm font-medium text-gray-500">No team selected</p>
             <p className="text-xs text-gray-400 mt-0.5">Pick a team from the sidebar or create one.</p>

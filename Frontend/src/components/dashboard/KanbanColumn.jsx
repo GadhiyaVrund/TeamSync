@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Plus, MoreHorizontal, ClipboardList } from "lucide-react";
 import TaskCard from "./TaskCard";
 
-export default function KanbanColumn({ column, onDragStart, onDrop, movingTaskId, canMoveTask }) {
+export default function KanbanColumn({ column, onDragStart, onDrop, movingTaskId, canMoveTask, team, currentUser, onTaskUpdated }) {
   const [isDragOver, setIsDragOver] = useState(false);
 
   const handleDragOver = (e) => {
@@ -33,14 +33,6 @@ export default function KanbanColumn({ column, onDragStart, onDrop, movingTaskId
             {column.tasks.length}
           </span>
         </div>
-        <div className="flex items-center gap-1">
-          <button className="p-1 rounded text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors">
-            <Plus className="h-3.5 w-3.5" />
-          </button>
-          <button className="p-1 rounded text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors">
-            <MoreHorizontal className="h-3.5 w-3.5" />
-          </button>
-        </div>
       </div>
 
       {/* Drop zone */}
@@ -61,6 +53,9 @@ export default function KanbanColumn({ column, onDragStart, onDrop, movingTaskId
             onDragStart={onDragStart}
             canDrag={canMoveTask ? canMoveTask(task) : false}
             isSaving={movingTaskId === task._id}
+            team={team}
+            currentUser={currentUser}
+            onTaskUpdated={onTaskUpdated}
           />
         ))}
 

@@ -178,13 +178,10 @@ export default function LandingPage() {
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <button
                     onClick={openRegister}
-                    className="bg-white text-primary hover:bg-gray-100 h-14 px-8 rounded-full text-lg font-bold shadow-lg hover:shadow-xl transition-all inline-flex items-center justify-center"
+                    className="bg-white text-primary hover:bg-gray-100 h-14 px-8 rounded-full text-lg font-bold shadow-lg hover:shadow-xl transition-all inline-flex items-center justify-center cursor-pointer"
                   >
                     Get Started for Free
                   </button>
-                  <Link href="/login" className="bg-primary-foreground/10 text-white hover:bg-primary-foreground/20 border border-white/20 h-14 px-8 rounded-full text-lg font-bold transition-all inline-flex items-center justify-center">
-                    Schedule Demo
-                  </Link>
                 </div>
               </div>
             </div>

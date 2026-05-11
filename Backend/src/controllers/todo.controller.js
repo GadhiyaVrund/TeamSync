@@ -77,6 +77,19 @@ const createTodo = asyncHandler(async (req, res) => {
     }
 
     // If assignedTo is provided, verify they are a team member
+    if (assignedTo !== undefined) {
+        if (assignedTo) {
+            const assigneeIsMember = team.members.some(
+                (member) => member.user.toString() === assignedTo.toString()
+            );
+
+            if (!assigneeIsMember) {
+                throw new ApiError(400, 'Assigned user must be a member of the team');
+            }
+        }
+    }
+
+    // If assignedTo is provided, verify they are a team member
     if (assignedTo) {
         const assigneeIsMember = teamExists.members.some(
             (member) => member.user.toString() === assignedTo.toString()
@@ -152,7 +165,7 @@ const completeTodo = asyncHandler(async (req, res) => {
 });
 
 const updateTodo = asyncHandler(async (req, res) => {
-    const { name, description, status, dueDate, priority } = req.body;
+    const { name, description, status, dueDate, priority, assignedTo } = req.body;
     const uid = req.user._id;
     const todo = await Todo.findById(req.params.id);
 
@@ -202,7 +215,8 @@ const updateTodo = asyncHandler(async (req, res) => {
             ...(description !== undefined && { description }),
             ...(status && { status }),
             ...(dueDate !== undefined && { dueDate }),
-            ...(priority && { priority })
+            ...(priority && { priority }),
+            ...(assignedTo !== undefined && { assignedTo: assignedTo || null })
         },
         { new: true }
     )

@@ -19,13 +19,13 @@ export function Navbar({ onLoginClick, onGetStartedClick }) {
         <div className="flex items-center gap-4">
           <button
             onClick={onLoginClick}
-            className="text-sm font-medium hover:text-primary transition-colors px-4 py-2"
+            className="text-sm font-medium hover:text-primary transition-colors px-4 py-2 cursor-pointer"
           >
             Login
           </button>
           <button
             onClick={onGetStartedClick}
-            className="bg-primary text-primary-foreground hover:bg-primary/90 px-5 py-2.5 rounded-full text-sm font-medium transition-all shadow-sm"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 px-5 py-2.5 rounded-full text-sm font-medium transition-all shadow-sm cursor-pointer"
           >
             Get Started
           </button>

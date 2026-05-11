@@ -8,3 +8,6 @@ export const registerUser = (data) =>
 
 export const getCurrentUser = () =>
   axiosInstance.get("/api/v1/users/me");
+
+export const logoutUser = () =>
+  axiosInstance.post("/api/v1/users/logout");

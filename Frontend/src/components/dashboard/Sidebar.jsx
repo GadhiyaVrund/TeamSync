@@ -14,6 +14,7 @@ import {
   Plus,
   LogOut,
 } from "lucide-react";
+import { logoutUser } from "../../apis/auth.api";
 
 const NAV_ITEMS = [
   { id: "home",     label: "Home",           icon: Home         },
@@ -205,6 +206,7 @@ export default function Sidebar({
             <Link
               href="/"
               title="Sign out"
+              onClick={logoutUser}
               className="p-1 rounded text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
             >
               <LogOut className="h-3.5 w-3.5" />

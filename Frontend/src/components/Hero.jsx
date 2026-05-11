@@ -26,14 +26,14 @@ export function Hero({ onGetStartedClick, onLoginClick }) {
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
               <button
                 onClick={onGetStartedClick}
-                className="inline-flex items-center justify-center bg-primary text-primary-foreground hover:bg-primary/90 h-14 px-8 rounded-full text-base font-medium shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all"
+                className="inline-flex items-center justify-center bg-primary text-primary-foreground hover:bg-primary/90 h-14 px-8 rounded-full text-base font-medium shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all cursor-pointer"
               >
                 Get Started
                 <ArrowRight className="ml-2 h-5 w-5" />
               </button>
               <button
                 onClick={onLoginClick}
-                className="inline-flex items-center justify-center bg-white border border-border text-foreground hover:bg-gray-50 h-14 px-8 rounded-full text-base font-medium shadow-sm transition-all"
+                className="inline-flex items-center justify-center bg-white border border-border text-foreground hover:bg-gray-50 h-14 px-8 rounded-full text-base font-medium shadow-sm transition-all cursor-pointer"
               >
                 Login to Dashboard
               </button>

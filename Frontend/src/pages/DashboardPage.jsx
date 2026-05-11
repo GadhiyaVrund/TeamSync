@@ -11,7 +11,7 @@ import { getCurrentUser } from "../apis/auth.api";
 export default function DashboardPage() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [activeNav, setActiveNav] = useState("home");
-  const [activeTab, setActiveTab] = useState("company");
+  const [activeTab, setActiveTab] = useState("home");
   const [newTaskOpen, setNewTaskOpen] = useState(false);
   const [createTeamOpen, setCreateTeamOpen] = useState(false);
 
