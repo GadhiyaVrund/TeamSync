@@ -6,6 +6,7 @@ import { TeamInvite } from '../models/teamInvite.model.js';
 import {ApiError} from '../utils/ApiError.js';
 import {ApiResponse} from '../utils/ApiResponse.js';
 import jwt from 'jsonwebtoken';
+import { AuditLog } from '../models/auditLog.model.js';
 
 const registerUser = asyncHandler(async (req, res) => {
     const { username, email, mobileNo, password } = req.body;
@@ -278,7 +279,27 @@ const searchUsers = asyncHandler(async (req, res) => {
 });
 
 
+const recentActivities = asyncHandler(async (req, res) => {
 
+    const userid = req.user._id;
+
+    if (!userid) {
+        throw new ApiError(401, 'User session is invalid');
+    }
+
+    // Example activity query (replace with actual activity logic)
+    const activities = await AuditLog.find({ performedBy: userid })  
+        .populate('performedBy', 'username')
+        .populate('todo', 'name')
+        .populate('team', 'name')
+        .sort({ createdAt: -1 })
+        .limit(10)
+        .lean();
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, activities, 'Recent activities fetched successfully'));
+});
 
 export {
     registerUser,
@@ -289,5 +310,6 @@ export {
     getCurrentUser,
     refreshAuthToken,
     getUserNotifications,
-    searchUsers
+    searchUsers,
+    recentActivities
 }

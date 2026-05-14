@@ -1,4 +1,9 @@
-import { registerUser, loginUser, logoutUser, updateUser, deleteUser, getCurrentUser, refreshAuthToken, getUserNotifications, searchUsers } from "../controllers/user.controller.js";
+import {
+    registerUser, loginUser, logoutUser,
+    updateUser, deleteUser, getCurrentUser,
+    refreshAuthToken, getUserNotifications,
+    searchUsers, recentActivities 
+} from "../controllers/user.controller.js";
 
 import express from 'express';
 import { verifyJwt } from '../middleware/auth.middleware.js';
@@ -15,4 +20,5 @@ router.route('/search').get(verifyJwt, searchUsers);
 router.route('/refresh').post(refreshAuthToken);
 router.route('/:id').patch(verifyJwt, updateUser);
 router.route('/:id').delete(verifyJwt, deleteUser);
+router.route('/activities').get(verifyJwt, recentActivities);
 export default router;
