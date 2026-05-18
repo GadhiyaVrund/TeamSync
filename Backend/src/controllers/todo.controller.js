@@ -76,18 +76,7 @@ const createTodo = asyncHandler(async (req, res) => {
         }
     }
 
-    // If assignedTo is provided, verify they are a team member
-    if (assignedTo !== undefined) {
-        if (assignedTo) {
-            const assigneeIsMember = team.members.some(
-                (member) => member.user.toString() === assignedTo.toString()
-            );
-
-            if (!assigneeIsMember) {
-                throw new ApiError(400, 'Assigned user must be a member of the team');
-            }
-        }
-    }
+    
 
     // If assignedTo is provided, verify they are a team member
     if (assignedTo) {

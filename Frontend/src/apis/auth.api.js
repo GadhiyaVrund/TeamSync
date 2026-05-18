@@ -11,3 +11,9 @@ export const getCurrentUser = () =>
 
 export const logoutUser = () =>
   axiosInstance.post("/api/v1/users/logout");
+
+export const updateUserProfile = (userId, data) =>
+  axiosInstance.patch(`/api/v1/users/${userId}`, data);
+
+export const deleteUserAccount = (userId) =>
+  axiosInstance.delete(`/api/v1/users/${userId}`);

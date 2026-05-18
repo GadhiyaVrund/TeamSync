@@ -153,6 +153,7 @@ const refreshAuthToken = asyncHandler(async (req, res) => {
 const updateUser = asyncHandler(async (req, res) => {
     const { id } = req.params;
     const allowedFields = ['username', 'email', 'mobileNo', 'password'];
+    const { currentPassword, confirmPassword } = req.body;
 
     const updates = {};
     for (const field of allowedFields) {
@@ -163,6 +164,16 @@ const updateUser = asyncHandler(async (req, res) => {
 
     if (Object.keys(updates).length === 0) {
         throw new ApiError(400, 'No valid fields provided for update');
+    }
+
+    if (updates.password) {
+        if (!currentPassword || !confirmPassword) {
+            throw new ApiError(400, 'Current password and password confirmation are required');
+        }
+
+        if (updates.password !== confirmPassword) {
+            throw new ApiError(400, 'New password and confirmation do not match');
+        }
     }
 
     // Check for uniqueness conflicts for username/email/mobileNo
@@ -184,6 +195,13 @@ const updateUser = asyncHandler(async (req, res) => {
     const user = await User.findById(id).select('+password');
     if (!user) {
         throw new ApiError(404, 'User not found');
+    }
+
+    if (updates.password) {
+        const isPasswordValid = await user.comparePassword(currentPassword);
+        if (!isPasswordValid) {
+            throw new ApiError(401, 'Current password is incorrect');
+        }
     }
 
     Object.assign(user, updates);

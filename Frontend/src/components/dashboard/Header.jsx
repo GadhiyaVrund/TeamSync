@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Search, Bell, SlidersHorizontal, X } from "lucide-react";
+import { Search, Bell, X } from "lucide-react";
 import NotificationPanel from "./NotificationPanel";
-import { getInitials, getAvatarColor } from "../../utils/avatar";
+import ProfileMenu from "./ProfileMenu";
 
 const HEADER_TABS = [
   { id: "home",     label: "Dashboard"    },
@@ -10,15 +10,11 @@ const HEADER_TABS = [
   { id: "sprint",   label: "Current Sprint"   },
 ];
 
-export default function Header({ activeTab, setActiveTab, currentUser }) {
+export default function Header({ activeTab, setActiveTab, currentUser, onOpenProfile, onLogout }) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [notificationOpen, setNotificationOpen] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
-
-  const username = currentUser?.username || "";
-  const initials = username ? getInitials(username) : "?";
-  const avatarColor = username ? getAvatarColor(username) : "bg-gray-400";
 
   return (
     <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-5 shrink-0 gap-4">
@@ -94,12 +90,7 @@ export default function Header({ activeTab, setActiveTab, currentUser }) {
         </div>
 
         
-        <div
-          className={`h-7 w-7 rounded-full ${avatarColor} flex items-center justify-center text-white text-xs font-bold cursor-pointer shrink-0`}
-          title={username}
-        >
-          {initials}
-        </div>
+        <ProfileMenu currentUser={currentUser} onOpenProfile={onOpenProfile} onLogout={onLogout} />
       </div>
     </header>
   );

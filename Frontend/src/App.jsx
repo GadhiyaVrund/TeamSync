@@ -6,6 +6,9 @@ function App() {
   return (
     <Switch>
       <Route path="/" component={LandingPage} />
+      <Route path="/login">
+        <LandingPage initialAuthOpen initialAuthTab="login" />
+      </Route>
       <Route path="/app" component={DashboardPage} />
       <Route>
         <div className="flex min-h-screen items-center justify-center bg-gray-50">

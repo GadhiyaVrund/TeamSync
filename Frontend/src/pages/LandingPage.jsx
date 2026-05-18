@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Navbar } from "../components/Navbar";
 import { Hero } from "../components/Hero";
 import { FeatureCard } from "../components/FeatureCard";
@@ -6,10 +6,45 @@ import { Footer } from "../components/Footer";
 import { AuthModal } from "../components/AuthModal";
 import { Link } from "wouter";
 import { Users, Lock, ClipboardList, FileSearch, Activity, LineChart, CheckCircle2 } from "lucide-react";
+import ToastBanner from "../components/dashboard/ToastBanner";
 
-export default function LandingPage() {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("login");
+export default function LandingPage({ initialAuthTab = "login", initialAuthOpen = false }) {
+  const [isModalOpen, setIsModalOpen] = useState(initialAuthOpen);
+  const [activeTab, setActiveTab] = useState(initialAuthTab);
+  const [flashToast, setFlashToast] = useState({ message: "", tone: "success" });
+
+  useEffect(() => {
+    const rawToast = sessionStorage.getItem("teamsync:flash-toast");
+    if (!rawToast) {
+      return;
+    }
+
+    sessionStorage.removeItem("teamsync:flash-toast");
+
+    try {
+      const parsed = JSON.parse(rawToast);
+      if (parsed?.message) {
+        setFlashToast({
+          message: parsed.message,
+          tone: parsed.tone === "error" ? "error" : "success",
+        });
+      }
+    } catch {
+      setFlashToast({ message: rawToast, tone: "success" });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!flashToast.message) {
+      return;
+    }
+
+    const timerId = setTimeout(() => {
+      setFlashToast({ message: "", tone: "success" });
+    }, 3000);
+
+    return () => clearTimeout(timerId);
+  }, [flashToast.message]);
 
   const openLogin = () => { setActiveTab("login"); setIsModalOpen(true); };
   const openRegister = () => { setActiveTab("register"); setIsModalOpen(true); };
@@ -48,6 +83,7 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-background font-sans selection:bg-primary/20 selection:text-primary">
+      <ToastBanner message={flashToast.message} tone={flashToast.tone} />
       <AuthModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

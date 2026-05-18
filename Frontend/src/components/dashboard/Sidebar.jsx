@@ -14,7 +14,6 @@ import {
   Plus,
   LogOut,
 } from "lucide-react";
-import { logoutUser } from "../../apis/auth.api";
 
 const NAV_ITEMS = [
   { id: "home",     label: "Home",           icon: Home         },
@@ -51,7 +50,7 @@ function NavItem({ icon: Icon, label, active, onClick, indent = false }) {
 
 export default function Sidebar({
   activeNav, onSelectNav, collapsed, setCollapsed,
-  teams = [], selectedTeamId, onSelectTeam, onCreateTeam, currentUser, teamsLoading = false,
+  teams = [], selectedTeamId, onSelectTeam, onCreateTeam, currentUser, teamsLoading = false, onLogout,
 }) {
   const [teamspacesOpen, setTeamspacesOpen] = useState(true);
   
@@ -203,14 +202,14 @@ export default function Sidebar({
               </p>
               <p className="text-xs text-gray-400 truncate">{currentUser?.email || ""}</p>
             </div>
-            <Link
-              href="/"
+            <button
+              type="button"
               title="Sign out"
-              onClick={logoutUser}
+              onClick={() => onLogout?.()}
               className="p-1 rounded text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
             >
               <LogOut className="h-3.5 w-3.5" />
-            </Link>
+            </button>
           </div>
         ) : (
           <div className="flex justify-center">

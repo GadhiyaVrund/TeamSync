@@ -1,19 +1,26 @@
-import { useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useLocation } from "wouter";
 import Sidebar from "../components/dashboard/Sidebar";
 import Header from "../components/dashboard/Header";
 import KanbanBoard from "../components/dashboard/KanbanBoard";
 import NewTaskModal from "../components/dashboard/NewTaskModal";
 import CreateTeamModal from "../components/dashboard/CreateTeamModal";
+import ManagerProfileModal from "../components/dashboard/ManagerProfileModal";
+import ToastBanner from "../components/dashboard/ToastBanner";
 import DashboardHome from "../components/dashboard/home/DashboardHome";
 import { getUserTeams, getTeamById, createTeam as createTeamAPI } from "../apis/team.api";
-import { getCurrentUser } from "../apis/auth.api";
+import { getCurrentUser, logoutUser } from "../apis/auth.api";
 
 export default function DashboardPage() {
+  const [, navigate] = useLocation();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [activeNav, setActiveNav] = useState("home");
   const [activeTab, setActiveTab] = useState("home");
   const [newTaskOpen, setNewTaskOpen] = useState(false);
   const [createTeamOpen, setCreateTeamOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [toast, setToast] = useState({ message: "", tone: "success" });
+  const toastTimerRef = useRef(null);
 
   const [teams, setTeams] = useState([]);
   const [selectedTeam, setSelectedTeam] = useState(null);
@@ -21,6 +28,57 @@ export default function DashboardPage() {
   const [currentUser, setCurrentUser] = useState(null);
   const [teamsLoading, setTeamsLoading] = useState(true);
   const [teamLoading, setTeamLoading] = useState(true);
+
+  useEffect(() => {
+    return () => {
+      if (toastTimerRef.current) {
+        clearTimeout(toastTimerRef.current);
+      }
+    };
+  }, []);
+
+  const showToast = (message, tone = "success") => {
+    setToast({ message, tone });
+
+    if (toastTimerRef.current) {
+      clearTimeout(toastTimerRef.current);
+    }
+
+    toastTimerRef.current = setTimeout(() => {
+      setToast({ message: "", tone: "success" });
+      toastTimerRef.current = null;
+    }, 3000);
+  };
+
+  const handleProfileUpdated = (updatedUser) => {
+    if (!updatedUser) {
+      return;
+    }
+
+    setCurrentUser((previous) => ({ ...previous, ...updatedUser }));
+  };
+
+  const handleLogout = async ({ skipRequest = false, redirectTo = "/login", flashMessage = "Signed out successfully." } = {}) => {
+    if (!skipRequest) {
+      try {
+        await logoutUser();
+      } catch (error) {
+        console.error("Logout request failed:", error);
+      }
+    }
+
+    setCurrentUser(null);
+    setProfileOpen(false);
+
+    if (flashMessage) {
+      sessionStorage.setItem(
+        "teamsync:flash-toast",
+        JSON.stringify({ message: flashMessage, tone: "success" })
+      );
+    }
+
+    navigate(redirectTo);
+  };
 
   const handleSelectNav = (navId) => {
     setActiveNav(navId);
@@ -182,6 +240,7 @@ export default function DashboardPage() {
         onCreateTeam={() => setCreateTeamOpen(true)}
         currentUser={currentUser}
         teamsLoading={teamsLoading}
+        onLogout={handleLogout}
       />
 
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
@@ -189,6 +248,8 @@ export default function DashboardPage() {
           activeTab={activeTab}
           setActiveTab={handleHeaderTabChange}
           currentUser={currentUser}
+          onOpenProfile={() => setProfileOpen(true)}
+          onLogout={handleLogout}
         />
 
         <main className="flex-1 overflow-y-auto p-6">
@@ -223,6 +284,17 @@ export default function DashboardPage() {
           onCreated={handleCreateTeam}
         />
       )}
+
+      <ManagerProfileModal
+        isOpen={profileOpen}
+        currentUser={currentUser}
+        onClose={() => setProfileOpen(false)}
+        onProfileUpdated={handleProfileUpdated}
+        onLogout={handleLogout}
+        onToast={showToast}
+      />
+
+      <ToastBanner message={toast.message} tone={toast.tone} />
     </div>
   );
 }
