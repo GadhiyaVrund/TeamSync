@@ -24,6 +24,9 @@ export const removeMember = (teamId, memberId) =>
 export const updateMemberRole = (teamId, memberId, data) =>
   axiosInstance.patch(`/api/v1/teams/${teamId}/members/${memberId}`, data);
 
+export const getTeamActivityLogs = (teamId, params = {}) =>
+  axiosInstance.get(`/api/v1/teams/${teamId}/logs`, { params });
+
 export const leaveTeam = (teamId) =>
   axiosInstance.post(`/api/v1/teams/${teamId}/leave`);
 

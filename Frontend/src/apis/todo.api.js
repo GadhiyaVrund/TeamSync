@@ -12,6 +12,9 @@ export const getPriorityTodos = () =>
 export const updateTodo = (id, data) =>
   axiosInstance.put(`/api/v1/todos/${id}`, data);
 
+export const deleteTodo = (id) =>
+  axiosInstance.delete(`/api/v1/todos/${id}`);
+
 export const moveTodo = (id, status) =>
   axiosInstance.patch(`/api/v1/todos/${id}/move`, { status });
 

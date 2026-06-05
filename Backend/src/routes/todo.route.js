@@ -6,7 +6,8 @@ import {
     updateTodo,
     completeTodo,
     moveTodo,
-    getPriorityTodos
+    getPriorityTodos,
+    deleteTodo
 } from "../controllers/todo.controller.js";
 import { verifyJwt } from "../middleware/auth.middleware.js";
 
@@ -22,7 +23,8 @@ router.route("/priority").get(getPriorityTodos);
 
 router.route("/:id")
     .get(getTodo)
-    .put(updateTodo);
+    .put(updateTodo)
+    .delete(deleteTodo);
 
 router.route("/:id/complete").patch(completeTodo);
 router.route("/:id/move").patch(moveTodo);

@@ -4,6 +4,7 @@ import { ApiResponse } from '../utils/ApiResponse.js';
 import { Team } from '../models/team.model.js';
 import { Todo } from '../models/todos.model.js';
 import { User } from '../models/user.model.js';
+import { AuditLog } from '../models/auditLog.model.js';
 
 // Create a new team
 const createTeam = asyncHandler(async (req, res) => {
@@ -279,8 +280,8 @@ const updateMemberRole = asyncHandler(async (req, res) => {
   const { role } = req.body;
   const userId = req.user._id;
 
-  if (!role || !['admin', 'member', 'viewer'].includes(role)) {
-    throw new ApiError(400, 'Valid role is required (admin, member, or viewer)');
+  if (!role || !['admin', 'member', 'manager'].includes(role)) {
+    throw new ApiError(400, 'Valid role is required (admin, member, or manager)');
   }
 
   const team = await Team.findById(teamId);
@@ -368,8 +369,47 @@ const leaveTeam = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, null, 'Successfully left the team'));
 });
 
+const getLogs = asyncHandler(async (req, res) => {
+  const { teamId } = req.params;
+  const { limit = 10, page = 1 } = req.query;
+  const limitNum = Math.min(100, Math.max(1, Number.parseInt(limit, 10) || 10));
+  const pageNum = Math.max(1, Number.parseInt(page, 10) || 1);
+
+  const team = await Team.findById(teamId);
+
+  if (!team) {
+    throw new ApiError(404, "Team not found");
+  }
+
+  const totalLogs = await AuditLog.countDocuments({ team: teamId });
+
+  const logs = await AuditLog.find({ team: teamId })
+    .populate("performedBy", "username fullName")
+    .populate("todo", "name")
+    .sort({ createdAt: -1 })
+    .skip((pageNum - 1) * limitNum)
+    .limit(limitNum);
+
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        logs,
+        page: pageNum,
+        limit: limitNum,
+        totalLogs,
+        totalPages: Math.ceil(totalLogs / limitNum),
+      },
+      logs.length
+        ? "Activity logs fetched successfully"
+        : "No activity logs found for this team"
+    )
+  );
+});
+
 export {
   createTeam,
+  getLogs,
   getUserTeams,
   getTeamById,
   updateTeam,

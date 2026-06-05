@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Plus, MoreHorizontal, ClipboardList } from "lucide-react";
 import TaskCard from "./TaskCard";
 
-export default function KanbanColumn({ column, onDragStart, onDrop, movingTaskId, canMoveTask, team, currentUser, onTaskUpdated }) {
+export default function KanbanColumn({ column, onDragStart, onDrop, movingTaskId, canMoveTask, team, currentUser, onTaskUpdated, onTaskDeleted }) {
   const [isDragOver, setIsDragOver] = useState(false);
 
   const handleDragOver = (e) => {
@@ -56,6 +56,7 @@ export default function KanbanColumn({ column, onDragStart, onDrop, movingTaskId
             team={team}
             currentUser={currentUser}
             onTaskUpdated={onTaskUpdated}
+            onTaskDeleted={onTaskDeleted}
           />
         ))}
 

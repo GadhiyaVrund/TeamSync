@@ -5,6 +5,9 @@ import { KanbanBoardSkeleton } from "./DashboardSkeletons";
 import MyTasksByTeam from "./MyTasksByTeam";
 import { moveTodo } from "../../apis/todo.api";
 import InviteUserModal from "./InviteUserModal";
+import TeamAdminMenu from "./teamAdmin/TeamAdminMenu";
+import TeamMembersModal from "./teamAdmin/TeamMembersModal";
+import TeamActivityLogsModal from "./teamAdmin/TeamActivityLogsModal";
 
 const COLUMN_CONFIG = {
   todo:       { id: "todo",       title: "To Do",      color: "bg-slate-400"    },
@@ -79,12 +82,22 @@ function buildColumns(tasks = []) {
   return cols;
 }
 
-export default function KanbanBoard({ activeTab, selectedTeam, currentUser, onNewTask, loading = false }) {
+export default function KanbanBoard({
+  activeTab,
+  selectedTeam,
+  currentUser,
+  onNewTask,
+  onTeamUpdated,
+  onToast,
+  loading = false,
+}) {
   const [columns, setColumns] = useState(() => buildColumns(selectedTeam?.tasks));
   const [movingTaskId, setMovingTaskId] = useState(null);
   const [toastMessage, setToastMessage] = useState("");
   const [toastTone, setToastTone] = useState("error");
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [teamMembersOpen, setTeamMembersOpen] = useState(false);
+  const [teamLogsOpen, setTeamLogsOpen] = useState(false);
   const dragTaskId = useRef(null);
   const dragSourceColumnId = useRef(null);
   const toastTimerRef = useRef(null);
@@ -199,6 +212,12 @@ export default function KanbanBoard({ activeTab, selectedTeam, currentUser, onNe
     }
   };
 
+  const handleTeamUpdated = (updatedTeam) => {
+    if (updatedTeam) {
+      onTeamUpdated?.(updatedTeam);
+    }
+  };
+
   const handleTaskUpdated = (updatedTask) => {
     // Refresh the task in columns
     setColumns((prev) => {
@@ -250,6 +269,20 @@ export default function KanbanBoard({ activeTab, selectedTeam, currentUser, onNe
     showToast("Task updated successfully", "success");
   };
 
+  const handleTaskDeleted = (taskId) => {
+    setColumns((prev) => {
+      const newColumns = JSON.parse(JSON.stringify(prev));
+      Object.keys(newColumns).forEach((colId) => {
+        newColumns[colId].tasks = newColumns[colId].tasks.filter(
+          (t) => t._id !== taskId
+        );
+      });
+      return newColumns;
+    });
+
+    showToast("Task deleted successfully", "success");
+  };
+
   if (activeTab === "my-tasks") {
     return <MyTasksByTeam />;
   }
@@ -284,6 +317,14 @@ export default function KanbanBoard({ activeTab, selectedTeam, currentUser, onNe
               <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-gray-600 shrink-0">
                 {currentUserRole}
               </span>
+            )}
+            {selectedTeam && (
+              <TeamAdminMenu
+                team={selectedTeam}
+                currentUser={currentUser}
+                onManageMembers={() => setTeamMembersOpen(true)}
+                onViewLogs={() => setTeamLogsOpen(true)}
+              />
             )}
           </div>
           <p className="text-xs text-gray-400 mt-0.5">
@@ -353,6 +394,7 @@ export default function KanbanBoard({ activeTab, selectedTeam, currentUser, onNe
               team={selectedTeam}
               currentUser={currentUser}
               onTaskUpdated={handleTaskUpdated}
+              onTaskDeleted={handleTaskDeleted}
             />
           ))}
         </div>
@@ -374,6 +416,32 @@ export default function KanbanBoard({ activeTab, selectedTeam, currentUser, onNe
           onClose={() => setInviteOpen(false)}
           team={selectedTeam}
           onSuccess={handleInviteSuccess}
+        />
+      )}
+
+      {teamMembersOpen && selectedTeam && (
+        <TeamMembersModal
+          isOpen={teamMembersOpen}
+          teamId={selectedTeam._id}
+          teamName={selectedTeam.name}
+          currentUser={currentUser}
+          onClose={() => setTeamMembersOpen(false)}
+          onTeamUpdated={handleTeamUpdated}
+          onToast={(message, tone) => {
+            onToast?.(message, tone);
+          }}
+        />
+      )}
+
+      {teamLogsOpen && selectedTeam && (
+        <TeamActivityLogsModal
+          isOpen={teamLogsOpen}
+          teamId={selectedTeam._id}
+          teamName={selectedTeam.name}
+          onClose={() => setTeamLogsOpen(false)}
+          onToast={(message, tone) => {
+            onToast?.(message, tone);
+          }}
         />
       )}
     </div>

@@ -264,6 +264,8 @@ export default function DashboardPage() {
               selectedTeam={selectedTeam}
               currentUser={currentUser}
               onNewTask={() => setNewTaskOpen(true)}
+              onTeamUpdated={setSelectedTeam}
+              onToast={showToast}
               loading={teamLoading}
             />
           )}

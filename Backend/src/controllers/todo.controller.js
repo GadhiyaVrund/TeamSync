@@ -252,7 +252,33 @@ const moveTodo = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, updatedTodo, 'Todo moved successfully'));
 });
 
+const deleteTodo = asyncHandler(async (req, res) => {
+    const userid = req.user._id;
+    const todo = await Todo.findById(req.params.id);
 
+    if (!todo) {
+        throw new ApiError(404, 'Todo not found');
+    }
+
+    const team = await Team.findById(todo.team);
+    if (!team) {
+        throw new ApiError(404, 'Team not found');
+    }
+
+    const userMember = team.members.find(
+        (member) => member.user.toString() === userid.toString()
+    );
+
+    if (!userMember || !['admin', 'manager'].includes(userMember.role)) {
+        throw new ApiError(403, 'Only admin or manager can delete tasks');
+    }
+
+    await Todo.findByIdAndDelete(req.params.id);
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, null, 'Todo deleted successfully'));
+});
 
 export {
     createTodo,
@@ -261,5 +287,6 @@ export {
     getAllTodos,
     updateTodo,
     moveTodo,
-    getPriorityTodos
+    getPriorityTodos,
+    deleteTodo
 };

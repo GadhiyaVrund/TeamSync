@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { X } from "lucide-react";
-import { updateTodo } from "../../apis/todo.api";
+import { deleteTodo, updateTodo } from "../../apis/todo.api";
 
 const STATUS_OPTIONS = [
   { value: "to-do", label: "To Do" },
@@ -15,7 +15,7 @@ const PRIORITY_OPTIONS = [
   { value: "high", label: "High" },
 ];
 
-export default function UpdateTaskModal({ task, onClose, onTaskUpdated, team }) {
+export default function UpdateTaskModal({ task, onClose, onTaskUpdated, onTaskDeleted, team }) {
   const [form, setForm] = useState({
     name: task?.name || "",
     description: task?.description || "",
@@ -25,6 +25,7 @@ export default function UpdateTaskModal({ task, onClose, onTaskUpdated, team }) 
     assignedTo: task?.assignedTo?._id || "",
   });
   const [loading, setLoading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -86,6 +87,29 @@ export default function UpdateTaskModal({ task, onClose, onTaskUpdated, team }) 
       );
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!task?._id) return;
+    const confirmed = window.confirm("Delete this task? This cannot be undone.");
+    if (!confirmed) return;
+
+    setDeleting(true);
+    setError("");
+
+    try {
+      await deleteTodo(task._id);
+      if (onTaskDeleted) {
+        onTaskDeleted(task._id);
+      }
+      onClose();
+    } catch (err) {
+      setError(
+        err.response?.data?.message || err.message || "Failed to delete task"
+      );
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -225,10 +249,18 @@ export default function UpdateTaskModal({ task, onClose, onTaskUpdated, team }) 
             </button>
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || deleting}
               className="flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 rounded-lg transition-colors"
             >
               {loading ? "Updating..." : "Update Task"}
+            </button>
+            <button
+              type="button"
+              onClick={handleDelete}
+              disabled={loading || deleting}
+              className="flex-1 px-4 py-2 text-sm font-medium text-red-600 border border-red-200 hover:bg-red-50 disabled:opacity-60 rounded-lg transition-colors"
+            >
+              {deleting ? "Deleting..." : "Delete Task"}
             </button>
           </div>
         </form>

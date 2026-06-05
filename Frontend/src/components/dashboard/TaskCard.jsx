@@ -53,7 +53,7 @@ function getDueDateInfo(dueDate) {
   }
 }
 
-export default function TaskCard({ task, onDragStart, canDrag = true, isSaving = false, team, currentUser, onTaskUpdated }) {
+export default function TaskCard({ task, onDragStart, canDrag = true, isSaving = false, team, currentUser, onTaskUpdated, onTaskDeleted }) {
   const [updateModalOpen, setUpdateModalOpen] = useState(false);
   
   const createdDate = task.createdAt
@@ -71,6 +71,13 @@ export default function TaskCard({ task, onDragStart, canDrag = true, isSaving =
   const handleTaskUpdated = (updatedTask) => {
     if (onTaskUpdated) {
       onTaskUpdated(updatedTask);
+    }
+    setUpdateModalOpen(false);
+  };
+
+  const handleTaskDeleted = (taskId) => {
+    if (onTaskDeleted) {
+      onTaskDeleted(taskId);
     }
     setUpdateModalOpen(false);
   };
@@ -153,6 +160,7 @@ export default function TaskCard({ task, onDragStart, canDrag = true, isSaving =
           team={team}
           onClose={() => setUpdateModalOpen(false)}
           onTaskUpdated={handleTaskUpdated}
+          onTaskDeleted={handleTaskDeleted}
         />
       )}
     </>

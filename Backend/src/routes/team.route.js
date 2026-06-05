@@ -5,6 +5,7 @@ import {
   getUserTeams,
   getTeamById,
   updateTeam,
+  getLogs,
   deleteTeam,
   addMember,
   removeMember,
@@ -27,6 +28,9 @@ router.route('/:teamId')
   .get(getTeamById)           // Get team by ID
   .patch(updateTeam)          // Update team details
   .delete(deleteTeam);        // Delete team
+
+router.route('/:teamId/logs')
+  .get(getLogs);              // Get team logs
 
 // Member management routes
 router.route('/:teamId/members')
