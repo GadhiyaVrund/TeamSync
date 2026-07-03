@@ -1,7 +1,14 @@
 import express from 'express';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
+import { apiRateLimiter } from './middleware/ratelimit.middleware.js';
+import { TRUST_PROXY_HOPS } from './config/rateLimit.config.js';
 const app = express();
+
+if (TRUST_PROXY_HOPS > 0) {
+    // A proxy-aware setup is required in production so rate limiting uses the real client IP.
+    app.set('trust proxy', TRUST_PROXY_HOPS);
+}
 
 app.use(cors({
     origin: process.env.FRONTEND_URL || 'http://localhost:5173',
@@ -11,6 +18,7 @@ app.use(express.json({ limit: '16kb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 app.use(cookieParser());
+app.use('/api', apiRateLimiter);
 
 import userRoutes from './routes/user.route.js';
 import teamRoutes from './routes/team.route.js';
