@@ -37,6 +37,11 @@ const teamSchema = new mongoose.Schema(
         ref: 'Todo'
       }
     ],
+    organization: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Organization',
+      required: [true, 'Organization reference is required']
+    },
     description: {
       type: String,
       trim: true,

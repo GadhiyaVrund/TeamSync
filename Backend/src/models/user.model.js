@@ -15,6 +15,11 @@ const userSchema = new mongoose.Schema(
       maxlength: [30, 'Username cannot exceed 30 characters'],
       match: [/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers, and underscores']
     },
+    organization: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Organization',
+      required: [true, 'Organization reference is required']
+    },
     email: {
       type: String,
       required: [true, 'Email is required'],

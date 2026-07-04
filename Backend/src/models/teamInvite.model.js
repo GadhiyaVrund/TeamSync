@@ -13,6 +13,11 @@ const teamInviteSchema = new mongoose.Schema(
       trim: true,
       lowercase: true
     },
+    organizationId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Organization',
+      required: [true, 'Organization reference is required']
+    },
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',

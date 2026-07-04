@@ -13,6 +13,11 @@ const todoSchema = new mongoose.Schema(
       trim: true,
       maxlength: [500, 'Description cannot exceed 500 characters']
     },
+    organization: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Organization',
+      required: [true, 'Organization reference is required']
+    },
     team: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Team',

@@ -8,7 +8,11 @@ const auditLogSchema = new mongoose.Schema(
       ref: 'User',
       required: [true, 'Performer (user) is required']
     },
-
+    organization: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Organization',
+      required: [true, 'Organization reference is required']
+    },
     // Which task was affected
     todo: {
       type: mongoose.Schema.Types.ObjectId,

@@ -5,10 +5,10 @@ import { Team } from '../models/team.model.js';
 import { User } from '../models/user.model.js';
 import { JoinRequest } from '../models/joinRequest.model.js';
 
-const isTeamAdmin = (team, userId) => {
+const isTeamAdminOrManager = (team, userId) => {
   return team.members.some(
     (member) =>
-      member.user.toString() === userId.toString() && member.role === 'admin'
+      member.user.toString() === userId.toString() && (member.role === 'admin' || member.role === 'manager')
   );
 };
 
@@ -78,7 +78,7 @@ const requestUserToJoinTeam = asyncHandler(async (req, res) => {
     throw new ApiError(404, 'Team not found');
   }
 
-  if (!isTeamAdmin(team, currentUserId)) {
+  if (!isTeamAdminOrManager(team, currentUserId)) {
     throw new ApiError(403, 'Only team admins can invite users');
   }
 
@@ -138,7 +138,7 @@ const approveJoinRequest = asyncHandler(async (req, res) => {
     throw new ApiError(404, 'Team not found');
   }
 
-  if (!isTeamAdmin(team, currentUserId)) {
+  if (!isTeamAdminOrManager(team, currentUserId)) {
     throw new ApiError(403, 'Only team admins can approve join requests');
   }
 
@@ -216,9 +216,9 @@ const rejectJoinRequest = asyncHandler(async (req, res) => {
     throw new ApiError(404, 'Team not found');
   }
 
-  const isAdmin = isTeamAdmin(team, currentUserId);
+  const isAllowed = isTeamAdminOrManager(team, currentUserId);
   const isTargetUser = joinRequest.userId.toString() === currentUserId.toString();
-  if (!isAdmin && !isTargetUser) {
+  if (!isAllowed && !isTargetUser) {
     throw new ApiError(403, 'You are not allowed to reject this request');
   }
 
