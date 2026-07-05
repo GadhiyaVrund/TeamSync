@@ -5,7 +5,7 @@ import { User } from '../models/user.model.js';
 
 const verifyJwt = asyncHandler(async (req, res, next) => {
     const authToken = req.cookies?.authToken;
-
+        
     if (!authToken) {
         throw new ApiError(401, 'Authentication token is missing');
     }
