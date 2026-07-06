@@ -10,6 +10,7 @@ import { AuditLog } from '../models/auditLog.model.js';
 const createTeam = asyncHandler(async (req, res) => {
   const { name, description } = req.body;
   const userId = req.user._id;
+  const organizationId = req.organization._id;
 
   if (!name || name.trim() === '') {
     throw new ApiError(400, 'Team name is required');
@@ -21,6 +22,7 @@ const createTeam = asyncHandler(async (req, res) => {
   // Check if team with same name already exists for this user
   const existingTeam = await Team.findOne({ 
     name, 
+    organization: organizationId,
     'members.user': userId 
   });
 
@@ -32,6 +34,7 @@ const createTeam = asyncHandler(async (req, res) => {
   const team = await Team.create({
     name,
     description,
+    organization: organizationId,
     members: [
       {
         user: userId,
@@ -41,7 +44,7 @@ const createTeam = asyncHandler(async (req, res) => {
     ]
   });
 
-  const createdTeam = await Team.findById(team._id)
+  const createdTeam = await Team.findOne({ _id: team._id, organization: organizationId })
     .populate('members.user', 'username email fullName');
 
   return res
@@ -52,8 +55,9 @@ const createTeam = asyncHandler(async (req, res) => {
 // Get all teams for the authenticated user
 const getUserTeams = asyncHandler(async (req, res) => {
   const userId = req.user._id;
+  const organizationId = req.organization._id;
 
-  const teams = await Team.find({ 'members.user': userId })
+  const teams = await Team.find({ organization: organizationId, 'members.user': userId })
     .populate('members.user', 'username email fullName')
     .populate({ path: 'tasks', options: { sort: { createdAt: -1 } } })
     .sort({ createdAt: -1 });
@@ -69,8 +73,9 @@ const getUserTeams = asyncHandler(async (req, res) => {
 const getTeamById = asyncHandler(async (req, res) => {
   const { teamId } = req.params;
   const userId = req.user._id;
+  const organizationId = req.organization._id;
 
-  const team = await Team.findById(teamId)
+  const team = await Team.findOne({ _id: teamId, organization: organizationId })
     .populate('members.user', 'username email fullName')
     .populate({
       path: 'tasks',
@@ -104,8 +109,9 @@ const updateTeam = asyncHandler(async (req, res) => {
   const { teamId } = req.params;
   const { name, description, isActive } = req.body;
   const userId = req.user._id;
+  const organizationId = req.organization._id;
 
-  const team = await Team.findById(teamId);
+  const team = await Team.findOne({ _id: teamId, organization: organizationId });
 
   if (!team) {
     throw new ApiError(404, 'Team not found');
@@ -127,7 +133,7 @@ const updateTeam = asyncHandler(async (req, res) => {
 
   await team.save();
 
-  const updatedTeam = await Team.findById(teamId)
+  const updatedTeam = await Team.findOne({ _id: teamId, organization: organizationId })
     .populate('members.user', 'username email fullName');
 
   return res
@@ -140,8 +146,9 @@ const updateTeam = asyncHandler(async (req, res) => {
 const deleteTeam = asyncHandler(async (req, res) => {
   const { teamId } = req.params;
   const userId = req.user._id;
+  const organizationId = req.organization._id;
 
-  const team = await Team.findById(teamId);
+  const team = await Team.findOne({ _id: teamId, organization: organizationId });
 
   if (!team) {
     throw new ApiError(404, 'Team not found');
@@ -157,10 +164,10 @@ const deleteTeam = asyncHandler(async (req, res) => {
   }
 
   // Delete all tasks associated with this team
-  await Todo.deleteMany({ team: teamId });
+  await Todo.deleteMany({ team: teamId, organization: organizationId });
 
   // Delete the team
-  await Team.findByIdAndDelete(teamId);
+  await Team.deleteOne({ _id: teamId, organization: organizationId });
 
   return res
     .status(200)
@@ -172,18 +179,19 @@ const addMember = asyncHandler(async (req, res) => {
   const { teamId } = req.params;
   const { userId: newUserId, role = 'member' } = req.body;
   const userId = req.user._id;
+  const organizationId = req.organization._id;
 
   if (!newUserId) {
     throw new ApiError(400, 'User ID is required');
   }
 
   // Check if the user to be added exists
-  const userExists = await User.findById(newUserId);
+  const userExists = await User.findOne({ _id: newUserId, organization: organizationId });
   if (!userExists) {
     throw new ApiError(404, 'User not found');
   }
 
-  const team = await Team.findById(teamId);
+  const team = await Team.findOne({ _id: teamId, organization: organizationId });
 
   if (!team) {
     throw new ApiError(404, 'Team not found');
@@ -216,7 +224,7 @@ const addMember = asyncHandler(async (req, res) => {
 
   await team.save();
 
-  const updatedTeam = await Team.findById(teamId)
+  const updatedTeam = await Team.findOne({ _id: teamId, organization: organizationId })
     .populate('members.user', 'username email fullName');
 
   return res
@@ -228,8 +236,9 @@ const addMember = asyncHandler(async (req, res) => {
 const removeMember = asyncHandler(async (req, res) => {
   const { teamId, memberId } = req.params;
   const userId = req.user._id;
+  const organizationId = req.organization._id;
 
-  const team = await Team.findById(teamId);
+  const team = await Team.findOne({ _id: teamId, organization: organizationId });
 
   if (!team) {
     throw new ApiError(404, 'Team not found');
@@ -266,7 +275,7 @@ const removeMember = asyncHandler(async (req, res) => {
 
   await team.save();
 
-  const updatedTeam = await Team.findById(teamId)
+  const updatedTeam = await Team.findOne({ _id: teamId, organization: organizationId })
     .populate('members.user', 'username email fullName');
 
   return res
@@ -279,12 +288,13 @@ const updateMemberRole = asyncHandler(async (req, res) => {
   const { teamId, memberId } = req.params;
   const { role } = req.body;
   const userId = req.user._id;
+  const organizationId = req.organization._id;
 
   if (!role || !['admin', 'member', 'manager'].includes(role)) {
     throw new ApiError(400, 'Valid role is required (admin, member, or manager)');
   }
 
-  const team = await Team.findById(teamId);
+  const team = await Team.findOne({ _id: teamId, organization: organizationId });
 
   if (!team) {
     throw new ApiError(404, 'Team not found');
@@ -319,7 +329,7 @@ const updateMemberRole = asyncHandler(async (req, res) => {
 
   await team.save();
 
-  const updatedTeam = await Team.findById(teamId)
+  const updatedTeam = await Team.findOne({ _id: teamId, organization: organizationId })
     .populate('members.user', 'username email fullName');
 
   return res
@@ -332,8 +342,9 @@ const updateMemberRole = asyncHandler(async (req, res) => {
 const leaveTeam = asyncHandler(async (req, res) => {
   const { teamId } = req.params;
   const userId = req.user._id;
+  const organizationId = req.organization._id;
 
-  const team = await Team.findById(teamId);
+  const team = await Team.findOne({ _id: teamId, organization: organizationId });
 
   if (!team) {
     throw new ApiError(404, 'Team not found');
@@ -372,18 +383,19 @@ const leaveTeam = asyncHandler(async (req, res) => {
 const getLogs = asyncHandler(async (req, res) => {
   const { teamId } = req.params;
   const { limit = 10, page = 1 } = req.query;
+  const organizationId = req.organization._id;
   const limitNum = Math.min(100, Math.max(1, Number.parseInt(limit, 10) || 10));
   const pageNum = Math.max(1, Number.parseInt(page, 10) || 1);
 
-  const team = await Team.findById(teamId);
+  const team = await Team.findOne({ _id: teamId, organization: organizationId });
 
   if (!team) {
     throw new ApiError(404, "Team not found");
   }
 
-  const totalLogs = await AuditLog.countDocuments({ team: teamId });
+  const totalLogs = await AuditLog.countDocuments({ team: teamId, organization: organizationId });
 
-  const logs = await AuditLog.find({ team: teamId })
+  const logs = await AuditLog.find({ team: teamId, organization: organizationId })
     .populate("performedBy", "username fullName")
     .populate("todo", "name")
     .sort({ createdAt: -1 })

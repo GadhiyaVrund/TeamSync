@@ -135,6 +135,14 @@ const refreshAuthToken = asyncHandler(async (req, res) => {
         throw new ApiError(401, 'Refresh token does not match the latest token');
     }
 
+    const tokenOrganizationId = decodedToken?.organization?.toString?.() || decodedToken?.organization;
+    const userOrganizationId = user.organization?.toString?.();
+
+    // Backward compatible: older refresh tokens may not include organization.
+    if (tokenOrganizationId && tokenOrganizationId !== userOrganizationId) {
+        throw new ApiError(401, 'Refresh token tenant mismatch');
+    }
+
     const { authToken, refreshToken } = await genereateAuthReftoken(user);
     const rules = {
         httpOnly: true,
@@ -152,6 +160,12 @@ const refreshAuthToken = asyncHandler(async (req, res) => {
 
 const updateUser = asyncHandler(async (req, res) => {
     const { id } = req.params;
+    const organizationId = req.organization._id;
+
+    if (!req.user || req.user._id.toString() !== id) {
+        throw new ApiError(403, 'Not authorized to update this account');
+    }
+
     const allowedFields = ['username', 'email', 'mobileNo', 'password'];
     const { currentPassword, confirmPassword } = req.body;
 
@@ -185,6 +199,7 @@ const updateUser = asyncHandler(async (req, res) => {
     if (conflictQuery.length) {
         const conflict = await User.findOne({
             $or: conflictQuery,
+            organization: organizationId,
             _id: { $ne: id }
         });
         if (conflict) {
@@ -192,7 +207,7 @@ const updateUser = asyncHandler(async (req, res) => {
         }
     }
 
-    const user = await User.findById(id).select('+password');
+    const user = await User.findOne({ _id: id, organization: organizationId }).select('+password');
     if (!user) {
         throw new ApiError(404, 'User not found');
     }
@@ -207,23 +222,24 @@ const updateUser = asyncHandler(async (req, res) => {
     Object.assign(user, updates);
     await user.save();
 
-    const updated = await User.findById(id).select('-refreshToken');
+    const updated = await User.findOne({ _id: id, organization: organizationId }).select('-refreshToken');
     return res.status(200).json(new ApiResponse(200, 'User updated successfully', updated));
 });
 
 const deleteUser = asyncHandler(async (req, res) => {
     const { id } = req.params;
+    const organizationId = req.organization._id;
 
     if (!req.user || req.user._id.toString() !== id) {
         throw new ApiError(403, 'Not authorized to delete this account');
     }
 
-    const user = await User.findById(id);
+    const user = await User.findOne({ _id: id, organization: organizationId });
     if (!user) {
         throw new ApiError(404, 'User not found');
     }
 
-    await User.deleteOne({ _id: id });
+    await User.deleteOne({ _id: id, organization: organizationId });
 
     return res
     .status(200)
@@ -236,8 +252,10 @@ const getUserNotifications = asyncHandler(async (req, res) => {
 
     const userId = req.user._id;
     const userEmail = req.user.email;
+    const organizationId = req.organization._id;
 
     const joinRequestsPromise = JoinRequest.find({
+        organization: organizationId,
         userId,
         status: 'pending',
         createdBy: { $ne: userId }
@@ -247,6 +265,7 @@ const getUserNotifications = asyncHandler(async (req, res) => {
         .sort({ createdAt: -1 });
 
     const teamInvitesPromise = TeamInvite.find({
+        organization: organizationId,
         status: 'pending',
         expiresAt: { $gt: new Date() },
         $or: [
@@ -277,6 +296,7 @@ const getUserNotifications = asyncHandler(async (req, res) => {
 
 const searchUsers = asyncHandler(async (req, res) => {
     const query = String(req.query.q || '').trim();
+    const organizationId = req.organization._id;
     if (!query) {
         return res
             .status(200)
@@ -284,6 +304,7 @@ const searchUsers = asyncHandler(async (req, res) => {
     }
 
     const users = await User.find({
+        organization: organizationId,
         _id: { $ne: req.user._id },
         username: { $regex: query, $options: 'i' }
     })
@@ -300,13 +321,14 @@ const searchUsers = asyncHandler(async (req, res) => {
 const recentActivities = asyncHandler(async (req, res) => {
 
     const userid = req.user._id;
+    const organizationId = req.organization._id;
 
     if (!userid) {
         throw new ApiError(401, 'User session is invalid');
     }
 
     // Example activity query (replace with actual activity logic)
-    const activities = await AuditLog.find({ performedBy: userid })  
+    const activities = await AuditLog.find({ performedBy: userid, organization: organizationId })  
         .populate('performedBy', 'username')
         .populate('todo', 'name')
         .populate('team', 'name')

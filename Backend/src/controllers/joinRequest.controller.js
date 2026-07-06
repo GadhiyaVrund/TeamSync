@@ -23,13 +23,9 @@ const requestToJoinTeam = asyncHandler(async (req, res) => {
   const currentUserId = req.user._id;
   const organizationId = req.organization._id;
 
-  const team = await Team.findById(teamId);
+  const team = await Team.findOne({ _id: teamId, organization: organizationId });
   if (!team) {
     throw new ApiError(404, 'Team not found');
-  }
-
-  if (team.organization.toString() !== organizationId.toString()) {
-    throw new ApiError(403, 'Cross-tenant access is not allowed');
   }
 
   if (isTeamMember(team, currentUserId)) {
@@ -81,20 +77,16 @@ const requestUserToJoinTeam = asyncHandler(async (req, res) => {
     throw new ApiError(400, 'You cannot invite yourself');
   }
 
-  const team = await Team.findById(teamId);
+  const team = await Team.findOne({ _id: teamId, organization: organizationId });
   if (!team) {
     throw new ApiError(404, 'Team not found');
-  }
-
-  if (team.organization.toString() !== organizationId.toString()) {
-    throw new ApiError(403, 'Cross-tenant access is not allowed');
   }
 
   if (!isTeamAdminOrManager(team, currentUserId)) {
     throw new ApiError(403, 'Only team admins can invite users');
   }
 
-  const targetUser = await User.findById(targetUserId).select('_id');
+  const targetUser = await User.findOne({ _id: targetUserId, organization: organizationId }).select('_id');
   if (!targetUser) {
     throw new ApiError(404, 'User not found');
   }
@@ -139,13 +131,9 @@ const approveJoinRequest = asyncHandler(async (req, res) => {
   const currentUserId = req.user._id;
   const organizationId = req.organization._id;
 
-  const joinRequest = await JoinRequest.findById(requestId);
+  const joinRequest = await JoinRequest.findOne({ _id: requestId, organization: organizationId });
   if (!joinRequest) {
     throw new ApiError(404, 'Join request not found');
-  }
-
-  if (joinRequest.organization.toString() !== organizationId.toString()) {
-    throw new ApiError(403, 'Cross-tenant access is not allowed');
   }
 
   if (joinRequest.status !== 'pending') {
@@ -185,13 +173,9 @@ const acceptJoinRequest = asyncHandler(async (req, res) => {
   const currentUserId = req.user._id;
   const organizationId = req.organization._id;
 
-  const joinRequest = await JoinRequest.findById(requestId);
+  const joinRequest = await JoinRequest.findOne({ _id: requestId, organization: organizationId });
   if (!joinRequest) {
     throw new ApiError(404, 'Join request not found');
-  }
-
-  if (joinRequest.organization.toString() !== organizationId.toString()) {
-    throw new ApiError(403, 'Cross-tenant access is not allowed');
   }
 
   if (joinRequest.status !== 'pending') {
@@ -231,13 +215,9 @@ const rejectJoinRequest = asyncHandler(async (req, res) => {
   const currentUserId = req.user._id;
   const organizationId = req.organization._id;
 
-  const joinRequest = await JoinRequest.findById(requestId);
+  const joinRequest = await JoinRequest.findOne({ _id: requestId, organization: organizationId });
   if (!joinRequest) {
     throw new ApiError(404, 'Join request not found');
-  }
-
-  if (joinRequest.organization.toString() !== organizationId.toString()) {
-    throw new ApiError(403, 'Cross-tenant access is not allowed');
   }
 
   const team = await Team.findOne({ _id: joinRequest.teamId, organization: organizationId });

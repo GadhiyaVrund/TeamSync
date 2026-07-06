@@ -45,12 +45,12 @@ const validateTaskMove = ({ role, fromStatus, toStatus }) => {
     }
 };
 
-const completeTask = async(taskid, userId) => { 
-    if(!(taskid && userId)) {  
-        throw new ApiError(400, 'Task ID and User ID are required');
+const completeTask = async(taskid, userId, organizationId) => { 
+    if(!(taskid && userId && organizationId)) {  
+        throw new ApiError(400, 'Task ID, user ID and organization ID are required');
     }
 
-    const task = await Todo.findById(taskid);
+    const task = await Todo.findOne({ _id: taskid, organization: organizationId });
     if (!task) {
         throw new ApiError(404, 'Task not found');
     }
@@ -59,7 +59,7 @@ const completeTask = async(taskid, userId) => {
         throw new ApiError(400, 'Task is already completed');
     }
 
-    const team = await Team.findById(task.team);
+    const team = await Team.findOne({ _id: task.team, organization: organizationId });
     if (!team) {
         throw new ApiError(404, 'Team not found');
     }
@@ -84,6 +84,7 @@ const completeTask = async(taskid, userId) => {
     await AuditLog.create({
         action: 'completed',
         performedBy: userId, 
+        organization: organizationId,
         todo: task._id,
         team: task.team,
         previousStatus: oldstatus,
@@ -93,14 +94,15 @@ const completeTask = async(taskid, userId) => {
     return task;
 }
 
-const addTodoUpdatedAuditLog = async ({ taskId, performedBy, teamId, previousStatus = null, newStatus = null }) => {
-    if (!(taskId && performedBy && teamId)) {
-        throw new ApiError(400, 'Task ID, performer, and team are required');
+const addTodoUpdatedAuditLog = async ({ taskId, performedBy, teamId, organizationId, previousStatus = null, newStatus = null }) => {
+    if (!(taskId && performedBy && teamId && organizationId)) {
+        throw new ApiError(400, 'Task ID, performer, team, and organization are required');
     }
 
     return AuditLog.create({
         action: 'updated',
         performedBy,
+        organization: organizationId,
         todo: taskId,
         team: teamId,
         previousStatus,
@@ -108,9 +110,9 @@ const addTodoUpdatedAuditLog = async ({ taskId, performedBy, teamId, previousSta
     });
 };
 
-const addTaskMoveAuditLog = async ({ taskId, performedBy, fromStatus, toStatus, teamId }) => {
-    if (!(taskId && performedBy && teamId)) {
-        throw new ApiError(400, 'Task ID, performer, and team are required');
+const addTaskMoveAuditLog = async ({ taskId, performedBy, fromStatus, toStatus, teamId, organizationId }) => {
+    if (!(taskId && performedBy && teamId && organizationId)) {
+        throw new ApiError(400, 'Task ID, performer, team, and organization are required');
     }
 
     if (!toStatus || fromStatus === toStatus) {
@@ -124,6 +126,7 @@ const addTaskMoveAuditLog = async ({ taskId, performedBy, fromStatus, toStatus, 
     return AuditLog.create({
         action: 'status_changed',
         performedBy,
+        organization: organizationId,
         todo: taskId,
         team: teamId,
         previousStatus: fromStatus ?? null,
@@ -131,9 +134,9 @@ const addTaskMoveAuditLog = async ({ taskId, performedBy, fromStatus, toStatus, 
     });
 };
 
-const logTaskColumnMove = async (taskId, userId, nextStatus) => {
-    if (!(taskId && userId && nextStatus)) {
-        throw new ApiError(400, 'Task ID, user ID and next status are required');
+const logTaskColumnMove = async (taskId, userId, nextStatus, organizationId) => {
+    if (!(taskId && userId && nextStatus && organizationId)) {
+        throw new ApiError(400, 'Task ID, user ID, next status and organization ID are required');
     }
 
     const normalizedStatus = nextStatus === 'pending' ? 'to-do' : nextStatus;
@@ -142,12 +145,12 @@ const logTaskColumnMove = async (taskId, userId, nextStatus) => {
         throw new ApiError(400, 'Invalid target status');
     }
 
-    const task = await Todo.findById(taskId);
+    const task = await Todo.findOne({ _id: taskId, organization: organizationId });
     if (!task) {
         throw new ApiError(404, 'Task not found');
     }
 
-    const team = await Team.findById(task.team);
+    const team = await Team.findOne({ _id: task.team, organization: organizationId });
     if (!team) {
         throw new ApiError(404, 'Team not found');
     }
@@ -170,12 +173,13 @@ const logTaskColumnMove = async (taskId, userId, nextStatus) => {
         fromStatus: task.status,
         toStatus: normalizedStatus,
         teamId: task.team,
+        organizationId,
     });
 };
 
-const moveTask = async (taskId, userId, nextStatus) => {
-    if (!(taskId && userId && nextStatus)) {
-        throw new ApiError(400, 'Task ID, user ID and next status are required');
+const moveTask = async (taskId, userId, nextStatus, organizationId) => {
+    if (!(taskId && userId && nextStatus && organizationId)) {
+        throw new ApiError(400, 'Task ID, user ID, next status and organization ID are required');
     }
 
     const normalizedStatus = nextStatus === 'pending' ? 'to-do' : nextStatus;
@@ -184,12 +188,12 @@ const moveTask = async (taskId, userId, nextStatus) => {
         throw new ApiError(400, 'Invalid target status');
     }
 
-    const task = await Todo.findById(taskId);
+    const task = await Todo.findOne({ _id: taskId, organization: organizationId });
     if (!task) {
         throw new ApiError(404, 'Task not found');
     }
 
-    const team = await Team.findById(task.team);
+    const team = await Team.findOne({ _id: task.team, organization: organizationId });
     if (!team) {
         throw new ApiError(404, 'Team not found');
     }
@@ -220,9 +224,10 @@ const moveTask = async (taskId, userId, nextStatus) => {
         fromStatus: previousStatus,
         toStatus: normalizedStatus,
         teamId: task.team,
+        organizationId,
     });
 
-    return Todo.findById(task._id)
+    return Todo.findOne({ _id: task._id, organization: organizationId })
         .populate('team', 'name description')
         .populate('assignedTo', 'username email fullName');
 };

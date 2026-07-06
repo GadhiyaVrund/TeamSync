@@ -29,13 +29,9 @@ const createTeamInvite = asyncHandler(async (req, res) => {
     throw new ApiError(400, 'Either userId or email is required');
   }
 
-  const team = await Team.findById(teamId);
+  const team = await Team.findOne({ _id: teamId, organization: organizationId });
   if (!team) {
     throw new ApiError(404, 'Team not found');
-  }
-
-  if (team.organization.toString() !== organizationId.toString()) {
-    throw new ApiError(403, 'Cross-tenant access is not allowed');
   }
 
   if (!isTeamAdmin(team, currentUserId)) {
@@ -46,7 +42,7 @@ const createTeamInvite = asyncHandler(async (req, res) => {
   let inviteEmail = null;
 
   if (userId) {
-    const targetUser = await User.findById(userId);
+    const targetUser = await User.findOne({ _id: userId, organization: organizationId });
     if (!targetUser) {
       throw new ApiError(404, 'Target user not found');
     }
@@ -108,13 +104,9 @@ const acceptTeamInvite = asyncHandler(async (req, res) => {
   const currentUserId = req.user._id;
   const organizationId = req.organization._id;
 
-  const invite = await TeamInvite.findById(inviteId);
+  const invite = await TeamInvite.findOne({ _id: inviteId, organization: organizationId });
   if (!invite) {
     throw new ApiError(404, 'Invite not found');
-  }
-
-  if (invite.organization.toString() !== organizationId.toString()) {
-    throw new ApiError(403, 'Cross-tenant access is not allowed');
   }
 
   if (invite.status !== 'pending') {

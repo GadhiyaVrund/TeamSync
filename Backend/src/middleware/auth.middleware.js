@@ -22,13 +22,27 @@ const verifyJwt = asyncHandler(async (req, res, next) => {
         throw new ApiError(401, 'Authentication token is invalid');
     }
 
+    const tokenOrganizationId = decodedToken?.organization?.toString?.() || decodedToken?.organization;
+
     const user = await User.findById(decodedToken?._id).select('-refreshToken');
 
     if (!user) {
         throw new ApiError(401, 'User not found for provided token');
     }
 
+    const userOrganizationId = user.organization?.toString?.();
+
+    if (!userOrganizationId) {
+        throw new ApiError(401, 'User organization is missing');
+    }
+
+    // Backward compatible: only enforce token tenant match when organization is present in token.
+    if (tokenOrganizationId && tokenOrganizationId !== userOrganizationId) {
+        throw new ApiError(401, 'Authentication token tenant mismatch');
+    }
+
     req.user = user;
+    req.organizationId = userOrganizationId;
     req.authToken = authToken;
 
     next();

@@ -8,6 +8,7 @@ import { Team } from "../models/team.model.js";
 const createTodo = asyncHandler(async (req, res) => {
     const { name, description, team, assignedTo, status, dueDate, priority } = req.body;
     const userId = req.user._id;
+    const organizationId = req.organization._id;
 
 
     const trimmedName = name ? name.trim() : '';
@@ -46,7 +47,7 @@ const createTodo = asyncHandler(async (req, res) => {
     }
 
     // Check if team exists
-    const teamExists = await Team.findById(team).select('members tasks');
+    const teamExists = await Team.findOne({ _id: team, organization: organizationId }).select('members tasks');
 
     if (!teamExists) {
         throw new ApiError(404, 'Team not found');
@@ -93,6 +94,7 @@ const createTodo = asyncHandler(async (req, res) => {
     const todo = await Todo.create({
         name: trimmedName,
         description: trimmedDescription || undefined,
+        organization: organizationId,
         team,
         assignedTo: assignedTo || null,
         status: status || 'to-do',
@@ -107,7 +109,7 @@ const createTodo = asyncHandler(async (req, res) => {
     await teamExists.save();
 
     // Fetch the created todo with populated fields
-    const createdTodo = await Todo.findById(todo._id)
+    const createdTodo = await Todo.findOne({ _id: todo._id, organization: organizationId })
         .populate('assignedTo', 'username')
         .select('_id name description status priority assignedTo createdAt dueDate');
 
@@ -117,7 +119,8 @@ const createTodo = asyncHandler(async (req, res) => {
 });
 
 const getTodo = asyncHandler(async (req, res) => {
-    const todo = await Todo.findById(req.params.id)
+    const organizationId = req.organization._id;
+    const todo = await Todo.findOne({ _id: req.params.id, organization: organizationId })
         .populate('team', 'name description')
         .populate('assignedTo', 'username email fullName');
 
@@ -132,7 +135,8 @@ const getTodo = asyncHandler(async (req, res) => {
 
 const getAllTodos = asyncHandler(async (req, res) => {
     const userid = req.user._id;
-    const todos = await Todo.find({ assignedTo: userid })
+    const organizationId = req.organization._id;
+    const todos = await Todo.find({ assignedTo: userid, organization: organizationId })
         .populate('team', 'name description')
         .populate('assignedTo', 'username email fullName')
         .sort({ dueDate: 1 }); // Sort by due date ascending
@@ -145,7 +149,7 @@ const getAllTodos = asyncHandler(async (req, res) => {
 
 
 const completeTodo = asyncHandler(async (req, res) => {
-    const task = await completeTask(req.params.id, req.user._id);
+    const task = await completeTask(req.params.id, req.user._id, req.organization._id);
 
     return res
         .status(200)
@@ -156,13 +160,14 @@ const completeTodo = asyncHandler(async (req, res) => {
 const updateTodo = asyncHandler(async (req, res) => {
     const { name, description, status, dueDate, priority, assignedTo } = req.body;
     const uid = req.user._id;
-    const todo = await Todo.findById(req.params.id);
+    const organizationId = req.organization._id;
+    const todo = await Todo.findOne({ _id: req.params.id, organization: organizationId });
 
     if (!todo) {
         throw new ApiError(404, 'Todo not found');
     }
 
-    const team = await Team.findById(todo.team);
+    const team = await Team.findOne({ _id: todo.team, organization: organizationId });
     if (!team) {
         throw new ApiError(404, 'Team not found');
     }
@@ -197,8 +202,8 @@ const updateTodo = asyncHandler(async (req, res) => {
         }
     }
 
-    const updatedTodo = await Todo.findByIdAndUpdate(
-        req.params.id,
+    const updatedTodo = await Todo.findOneAndUpdate(
+        { _id: req.params.id, organization: organizationId },
         { 
             ...(name && { name }),
             ...(description !== undefined && { description }),
@@ -221,12 +226,13 @@ const updateTodo = asyncHandler(async (req, res) => {
 const getPriorityTodos = asyncHandler(async (req, res) => {
 
     const userid = req.user._id;
+    const organizationId = req.organization._id;
 
     if(!userid){
         throw new ApiError(400, 'User ID is required');
     }
     
-    const todos = await Todo.find({ assignedTo: userid })
+    const todos = await Todo.find({ assignedTo: userid, organization: organizationId })
         .populate('team', 'name description')
         .populate('assignedTo', 'username email fullName')
         .sort({ priority: -1, dueDate: 1 }); 
@@ -245,7 +251,7 @@ const getPriorityTodos = asyncHandler(async (req, res) => {
 
 const moveTodo = asyncHandler(async (req, res) => {
     const { status } = req.body;
-    const updatedTodo = await moveTask(req.params.id, req.user._id, status);
+    const updatedTodo = await moveTask(req.params.id, req.user._id, status, req.organization._id);
 
     return res
     .status(200)
@@ -254,13 +260,14 @@ const moveTodo = asyncHandler(async (req, res) => {
 
 const deleteTodo = asyncHandler(async (req, res) => {
     const userid = req.user._id;
-    const todo = await Todo.findById(req.params.id);
+    const organizationId = req.organization._id;
+    const todo = await Todo.findOne({ _id: req.params.id, organization: organizationId });
 
     if (!todo) {
         throw new ApiError(404, 'Todo not found');
     }
 
-    const team = await Team.findById(todo.team);
+    const team = await Team.findOne({ _id: todo.team, organization: organizationId });
     if (!team) {
         throw new ApiError(404, 'Team not found');
     }
@@ -273,7 +280,7 @@ const deleteTodo = asyncHandler(async (req, res) => {
         throw new ApiError(403, 'Only admin or manager can delete tasks');
     }
 
-    await Todo.findByIdAndDelete(req.params.id);
+    await Todo.deleteOne({ _id: req.params.id, organization: organizationId });
 
     return res
         .status(200)
