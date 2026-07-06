@@ -1,5 +1,6 @@
 import express from 'express';
 import { verifyJwt } from '../middleware/auth.middleware.js';
+import { verifyTenant } from '../middleware/tenant.middleware.js';
 import {
   createTeamInvite,
   acceptTeamInvite
@@ -8,6 +9,7 @@ import {
 const router = express.Router();
 
 router.use(verifyJwt);
+router.use(verifyTenant);
 
 // Admin to user invite
 router.route('/teams/:teamId')

@@ -1,5 +1,6 @@
 import express from 'express';
 import { verifyJwt } from '../middleware/auth.middleware.js';
+import { verifyTenant } from '../middleware/tenant.middleware.js';
 import {
   createTeam,
   getUserTeams,
@@ -18,6 +19,7 @@ const router = express.Router();
 
 // All routes require authentication
 router.use(verifyJwt);
+router.use(verifyTenant);
 
 // Team routes
 router.route('/')

@@ -23,6 +23,7 @@ const createTeamInvite = asyncHandler(async (req, res) => {
   const { teamId } = req.params;
   const { userId, email } = req.body;
   const currentUserId = req.user._id;
+  const organizationId = req.organization._id;
 
   if (!userId && !email) {
     throw new ApiError(400, 'Either userId or email is required');
@@ -31,6 +32,10 @@ const createTeamInvite = asyncHandler(async (req, res) => {
   const team = await Team.findById(teamId);
   if (!team) {
     throw new ApiError(404, 'Team not found');
+  }
+
+  if (team.organization.toString() !== organizationId.toString()) {
+    throw new ApiError(403, 'Cross-tenant access is not allowed');
   }
 
   if (!isTeamAdmin(team, currentUserId)) {
@@ -69,6 +74,7 @@ const createTeamInvite = asyncHandler(async (req, res) => {
 
   const existingPendingInvite = await TeamInvite.findOne({
     teamId,
+    organization: organizationId,
     status: 'pending',
     $or: [
       ...(inviteUserId ? [{ userId: inviteUserId }] : []),
@@ -82,6 +88,7 @@ const createTeamInvite = asyncHandler(async (req, res) => {
 
   const teamInvite = await TeamInvite.create({
     teamId,
+    organization: organizationId,
     userId: inviteUserId,
     email: inviteEmail,
     role: 'member',
@@ -99,10 +106,15 @@ const createTeamInvite = asyncHandler(async (req, res) => {
 const acceptTeamInvite = asyncHandler(async (req, res) => {
   const { inviteId } = req.params;
   const currentUserId = req.user._id;
+  const organizationId = req.organization._id;
 
   const invite = await TeamInvite.findById(inviteId);
   if (!invite) {
     throw new ApiError(404, 'Invite not found');
+  }
+
+  if (invite.organization.toString() !== organizationId.toString()) {
+    throw new ApiError(403, 'Cross-tenant access is not allowed');
   }
 
   if (invite.status !== 'pending') {
@@ -125,7 +137,7 @@ const acceptTeamInvite = asyncHandler(async (req, res) => {
     throw new ApiError(403, 'This invite is not assigned to your email');
   }
 
-  const team = await Team.findById(invite.teamId);
+  const team = await Team.findOne({ _id: invite.teamId, organization: organizationId });
   if (!team) {
     throw new ApiError(404, 'Team not found');
   }

@@ -10,10 +10,12 @@ import {
     deleteTodo
 } from "../controllers/todo.controller.js";
 import { verifyJwt } from "../middleware/auth.middleware.js";
+import { verifyTenant } from "../middleware/tenant.middleware.js";
 
 const router = Router();
 
 router.use(verifyJwt);
+router.use(verifyTenant);
 
 router.route("/")
     .post(createTodo)

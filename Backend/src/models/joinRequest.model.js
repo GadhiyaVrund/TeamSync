@@ -12,7 +12,7 @@ const joinRequestSchema = new mongoose.Schema(
       ref: 'User',
       required: [true, 'User reference is required']
     },
-    organizationId: {
+    organization: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Organization',
       required: [true, 'Organization reference is required']

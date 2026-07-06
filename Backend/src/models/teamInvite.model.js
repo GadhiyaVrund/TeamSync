@@ -13,7 +13,7 @@ const teamInviteSchema = new mongoose.Schema(
       trim: true,
       lowercase: true
     },
-    organizationId: {
+    organization: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Organization',
       required: [true, 'Organization reference is required']
