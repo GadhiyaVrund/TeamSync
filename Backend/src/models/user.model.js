@@ -18,7 +18,8 @@ const userSchema = new mongoose.Schema(
     organization: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Organization',
-      required: [true, 'Organization reference is required']
+      default: null,
+      required: false
     },
     email: {
       type: String,

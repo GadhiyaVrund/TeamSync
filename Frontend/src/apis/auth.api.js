@@ -17,3 +17,9 @@ export const updateUserProfile = (userId, data) =>
 
 export const deleteUserAccount = (userId) =>
   axiosInstance.delete(`/api/v1/users/${userId}`);
+
+export const createOrganization = (data) =>
+  axiosInstance.post("/api/v1/organizations/", data);
+
+export const joinOrganization = (data) =>
+  axiosInstance.post("/api/v1/organizations/join", data);

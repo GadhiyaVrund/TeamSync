@@ -12,16 +12,17 @@ import { loginRateLimiter, registerRateLimiter } from '../middleware/ratelimit.m
 
 
 const router = express.Router();
-const protectedMiddlewares = [verifyJwt, verifyTenant];
+const authMiddlewares = [verifyJwt];
+const tenantMiddlewares = [verifyJwt, verifyTenant];
 
 router.route('/register').post(registerRateLimiter, registerUser);
 router.route('/login').post(loginRateLimiter, loginUser);
-router.route('/logout').post(...protectedMiddlewares, logoutUser);
-router.route('/me').get(...protectedMiddlewares, getCurrentUser);
-router.route('/notifications').get(...protectedMiddlewares, getUserNotifications);
-router.route('/search').get(...protectedMiddlewares, searchUsers);
+router.route('/logout').post(...authMiddlewares, logoutUser);
+router.route('/me').get(...authMiddlewares, getCurrentUser);
+router.route('/notifications').get(...tenantMiddlewares, getUserNotifications);
+router.route('/search').get(...tenantMiddlewares, searchUsers);
 router.route('/refresh').post(refreshAuthToken);
-router.route('/:id').patch(...protectedMiddlewares, updateUser);
-router.route('/:id').delete(...protectedMiddlewares, deleteUser);
-router.route('/activities').get(...protectedMiddlewares, recentActivities);
+router.route('/:id').patch(...tenantMiddlewares, updateUser);
+router.route('/:id').delete(...tenantMiddlewares, deleteUser);
+router.route('/activities').get(...tenantMiddlewares, recentActivities);
 export default router;

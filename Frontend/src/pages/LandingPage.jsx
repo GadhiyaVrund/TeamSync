@@ -89,7 +89,7 @@ export default function LandingPage({ initialAuthTab = "login", initialAuthOpen 
         onClose={() => setIsModalOpen(false)}
         defaultTab={activeTab}
       />
-      <Navbar onLoginClick={openLogin} onGetStartedClick={openRegister} />
+      <Navbar onLoginClick={openLogin} onGetStartedClick={openRegister} isAuthOpen={isModalOpen} />
       <main>
         <Hero onGetStartedClick={openRegister} onLoginClick={openLogin} />
 
@@ -102,7 +102,7 @@ export default function LandingPage({ initialAuthTab = "login", initialAuthOpen 
                 Powerful tools designed to create transparency, enforce accountability, and drive massive productivity gains.
               </p>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {features.map((feature, index) => (
                 <FeatureCard key={index} {...feature} />
@@ -178,10 +178,10 @@ export default function LandingPage({ initialAuthTab = "login", initialAuthOpen 
                 Get up and running in minutes, not months.
               </p>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
               <div className="hidden md:block absolute top-12 left-[15%] right-[15%] h-0.5 bg-border z-0"></div>
-              
+
               {[
                 { step: "01", title: "Create or Join a Team", desc: "Set up your workspace and invite members via email or SSO." },
                 { step: "02", title: "Assign and Track Tasks", desc: "Create tasks, assign owners, and watch progress flow through the board." },
@@ -205,7 +205,7 @@ export default function LandingPage({ initialAuthTab = "login", initialAuthOpen 
             <div className="bg-primary rounded-[2.5rem] p-10 md:p-16 text-center text-primary-foreground shadow-2xl relative overflow-hidden">
               <div className="absolute top-0 right-0 -mt-20 -mr-20 w-80 h-80 bg-white/10 rounded-full blur-3xl"></div>
               <div className="absolute bottom-0 left-0 -mb-20 -ml-20 w-80 h-80 bg-black/10 rounded-full blur-3xl"></div>
-              
+
               <div className="relative z-10 max-w-3xl mx-auto">
                 <h2 className="text-4xl md:text-5xl font-extrabold mb-6">Ready to transform your team?</h2>
                 <p className="text-xl md:text-2xl text-primary-foreground/90 mb-10 font-medium">

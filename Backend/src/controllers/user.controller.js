@@ -7,6 +7,7 @@ import {ApiError} from '../utils/ApiError.js';
 import {ApiResponse} from '../utils/ApiResponse.js';
 import jwt from 'jsonwebtoken';
 import { AuditLog } from '../models/auditLog.model.js';
+import { getAuthCookieOptions, issueAuthTokens } from '../services/auth.service.js';
 
 const registerUser = asyncHandler(async (req, res) => {
     const { username, email, mobileNo, password } = req.body;
@@ -25,25 +26,17 @@ const registerUser = asyncHandler(async (req, res) => {
         throw new ApiError(500, 'User registration failed');
     }
 
-    //wait untill user is created
-    const createdUser = await User.findById(user._id);
+    const createdUser = await User.findById(user._id).select('-refreshToken');
+    const { authToken, refreshToken } = await issueAuthTokens(user);
+    const rules = getAuthCookieOptions();
 
 
     return res
     .status(201)
-    .json(new ApiResponse(201, 'User registered successfully', createdUser));
+    .cookie('authToken', authToken, rules)
+    .cookie('refreshToken', refreshToken, rules)
+    .json(new ApiResponse(201, createdUser, 'User registered successfully'));
 })
-
-
-const genereateAuthReftoken = async (user) =>{
-    const authToken = user.generateAccessToken();
-    const refreshToken = user.generateRefreshToken();
-
-    user.refreshToken = refreshToken;
-    await user.save({ validateBeforeSave: false });
-
-    return { authToken, refreshToken };
-}
 
 
 const loginUser = asyncHandler(async (req, res) => {
@@ -67,19 +60,15 @@ const loginUser = asyncHandler(async (req, res) => {
     }
 
 
-    const { authToken, refreshToken } = await genereateAuthReftoken(user);
+    const { authToken, refreshToken } = await issueAuthTokens(user);
     //store tokens in cookies 
-    const rules = {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-    }
+    const rules = getAuthCookieOptions();
 
     return res
     .status(200)
     .cookie('authToken', authToken, rules)
     .cookie('refreshToken', refreshToken, rules)
-    .json(new ApiResponse(200, 'Login successful', { authToken, refreshToken }));
+    .json(new ApiResponse(200, { authToken, refreshToken }, 'Login successful'));
 
 })
 
@@ -94,7 +83,7 @@ const logoutUser = asyncHandler(async (req, res) => {
     .status(200)
     .clearCookie('authToken')
     .clearCookie('refreshToken')
-    .json(new ApiResponse(200, 'Logout successful'));
+    .json(new ApiResponse(200, null, 'Logout successful'));
 
 
 })
@@ -143,17 +132,14 @@ const refreshAuthToken = asyncHandler(async (req, res) => {
         throw new ApiError(401, 'Refresh token tenant mismatch');
     }
 
-    const { authToken, refreshToken } = await genereateAuthReftoken(user);
-    const rules = {
-        httpOnly: true,
-        secure: true,
-    };
+    const { authToken, refreshToken } = await issueAuthTokens(user);
+    const rules = getAuthCookieOptions();
 
     return res
     .status(200)
     .cookie('authToken', authToken, rules)
     .cookie('refreshToken', refreshToken, rules)
-    .json(new ApiResponse(200, 'Tokens refreshed successfully', { authToken, refreshToken }));
+    .json(new ApiResponse(200, { authToken, refreshToken }, 'Tokens refreshed successfully'));
 });
 
 

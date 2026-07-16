@@ -32,17 +32,13 @@ const verifyJwt = asyncHandler(async (req, res, next) => {
 
     const userOrganizationId = user.organization?.toString?.();
 
-    if (!userOrganizationId) {
-        throw new ApiError(401, 'User organization is missing');
-    }
-
     // Backward compatible: only enforce token tenant match when organization is present in token.
     if (tokenOrganizationId && tokenOrganizationId !== userOrganizationId) {
         throw new ApiError(401, 'Authentication token tenant mismatch');
     }
 
     req.user = user;
-    req.organizationId = userOrganizationId;
+    req.organizationId = userOrganizationId || null;
     req.authToken = authToken;
 
     next();

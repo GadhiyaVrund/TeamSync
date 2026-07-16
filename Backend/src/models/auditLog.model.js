@@ -17,14 +17,14 @@ const auditLogSchema = new mongoose.Schema(
     todo: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Todo',
-      required: [true, 'Todo reference is required']
+      default: null
     },
 
     // Which team the task belongs to
     team: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Team',
-      required: [true, 'Team reference is required']
+      default: null
     },
 
     // Type of action performed
@@ -38,7 +38,12 @@ const auditLogSchema = new mongoose.Schema(
         'assigned',      // Task was assigned to a user
         'unassigned',    // Task assignment was removed
         'status_changed',// Task status changed (pending → in-progress, etc.)
-        'deleted'        // Task was deleted
+        'deleted',       // Task was deleted
+        'organization_created',
+        'join_code_regenerated',
+        'organization_joined',
+        'organization_left',
+        'role_changed'
       ],
       required: [true, 'Action type is required']
     },
@@ -56,6 +61,10 @@ const auditLogSchema = new mongoose.Schema(
       enum: ['to-do', 'pending', 'in-progress', 'in-review', 'completed', null],
       default: null
     },
+    metadata: {
+      type: mongoose.Schema.Types.Mixed,
+      default: {}
+    }
   },
   {
     timestamps: true // Adds createdAt (when the log was recorded) and updatedAt
@@ -72,6 +81,9 @@ auditLogSchema.index({ performedBy: 1, createdAt: -1 });
 
 // Look up all logs within a team
 auditLogSchema.index({ team: 1, createdAt: -1 });
+
+// Look up all organization-level events within an organization
+auditLogSchema.index({ organization: 1, createdAt: -1 });
 
 // Filter by action type across the collection
 auditLogSchema.index({ action: 1 });
